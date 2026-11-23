@@ -757,7 +757,7 @@ Risecommerce Magento 2 MCP is one of a family of Magento 2 extensions and tools 
 ---
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/cdc904ce-e839-40a0-a86f-792f7ab7961f" alt="Risecommerce" width="240"><br>
+  <img src="https://risecommerce.com/store/media/logo/stores/1/riselogo--red.svg" alt="Risecommerce" width="240"><br>
   <b>Risecommerce</b>: full-service e-commerce agency · Adobe Certified Magento developers · Hyvä Partner<br>
   <a href="https://risecommerce.com">risecommerce.com</a> · <a href="https://risecommerce.com/store/magento-2-extensions.html">Magento 2 extensions</a> · <a href="https://risecommerce.com/contact">Contact</a>
 </p>
