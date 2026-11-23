@@ -1,0 +1,385 @@
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ *
+ * Shared MCP "Resource Access" jstree widget. Used by:
+ *  - Token edit form (full feature set: admin-user re-fetch + All/Custom toggle).
+ *  - OAuth Client edit form (trimmed: clients are admin-agnostic; pass empty
+ *    `adminUserSelector` / `allResourcesSelector` to disable those branches).
+ *
+ * Behaviours:
+ *  1. Honours node `state.disabled` so scopes the chosen admin user's role
+ *     does not grant cannot be checked (server-side guard mirrors this).
+ *  2. Re-fetches the tree from a controller route whenever the admin-user
+ *     dropdown changes (only if `adminUserSelector` is set) — selections
+ *     still allowed under the new role are preserved, the rest dropped.
+ *  3. Toggles the tree container visibility based on the All/Custom select
+ *     (only if `allResourcesSelector` is set).
+ *  4. Public `applySelection(ids)` re-renders the tree with a fresh selection
+ *     — used by the OAuth client preset dropdown.
+ *  5. Optional `allowAllSelector` — clicks tick every non-disabled node and
+ *     resync the hidden form inputs. Used by the OAuth client form.
+ */
+define([
+    'jquery',
+    'jquery/ui',
+    'jquery/jstree/jquery.jstree'
+], function ($) {
+    'use strict';
+
+    $.widget('mage.mcpScopesTree', {
+        options: {
+            treeUrl: '',
+            editFormSelector: '#edit_form',
+            adminUserSelector: '',
+            allResourcesSelector: '',
+            treeContainerSelector: '',
+            noAdminPlaceholderSelector: '',
+            treeWrapperSelector: '',
+            allowAllSelector: '',
+            allowAllFutureSelector: '',
+            allowAllFutureSectionSelector: '',
+            resourceFieldName: 'resource[]',
+            initialTree: [],
+            initialSelection: []
+        },
+
+        /** True while _syncParentStates runs; the cascade handlers skip then. */
+        _syncingParents: false,
+
+        _create: function () {
+            this._bindToggleAllResources();
+            this._bindAllowAllButton();
+            this._bindAllowAllFutureToggle();
+            this._bindAdminUserChange();
+            this._bindFormSubmitGuard();
+            this._renderTree(this.options.initialTree || [], this.options.initialSelection || []);
+            this._refreshAdminPlaceholder();
+            this._refreshAllowAllFutureSectionVisibility();
+            this._syncSelections();
+        },
+
+        _refreshAdminPlaceholder: function () {
+            if (!this.options.adminUserSelector) {
+                return;
+            }
+            var hasAdmin = this._currentAdminUserId() > 0;
+            if (this.options.noAdminPlaceholderSelector) {
+                $(this.options.noAdminPlaceholderSelector).toggleClass('no-display', hasAdmin);
+            }
+            if (this.options.treeWrapperSelector) {
+                $(this.options.treeWrapperSelector).toggleClass('no-display', !hasAdmin);
+            }
+        },
+
+        _currentAdminUserId: function () {
+            if (!this.options.adminUserSelector) {
+                return 0;
+            }
+            var raw = $(this.options.adminUserSelector).val();
+            return parseInt(raw, 10) || 0;
+        },
+
+        _renderTree: function (treeData, selection) {
+            var element = this.element;
+            if (element.data('jstree')) {
+                element.jstree('destroy');
+            }
+
+            var dataWithSelection = this._applySelection(
+                this._cloneTree(treeData),
+                Array.isArray(selection) ? selection : []
+            );
+
+            element.off('.mcpScopesTree');
+            element.on('select_node.jstree.mcpScopesTree', $.proxy(this._selectChildNodes, this));
+            element.on('deselect_node.jstree.mcpScopesTree', $.proxy(this._deselectChildNodes, this));
+            element.on('ready.jstree.mcpScopesTree', $.proxy(this._onTreeChanged, this));
+            element.on('changed.jstree.mcpScopesTree', $.proxy(this._onTreeChanged, this));
+
+            element.jstree({
+                plugins: ['checkbox'],
+                checkbox: {
+                    three_state: false,
+                    cascade: 'undetermined',
+                    visible: true
+                },
+                core: {
+                    data: dataWithSelection,
+                    themes: { dots: false },
+                    check_callback: function (operation, node) {
+                        if (operation === 'check_node' || operation === 'select_node') {
+                            return !(node && node.state && node.state.disabled);
+                        }
+                        return true;
+                    }
+                }
+            });
+        },
+
+        _onTreeChanged: function () {
+            this._syncParentStates();
+            this._syncSelections();
+        },
+
+        /**
+         * Tick every parent whose enabled children are all ticked, untick the
+         * rest. Bottom-up, so nested parents see their children's final state.
+         * jstree's `supress_event` only silences `changed.jstree`; the
+         * `select_node` / `deselect_node` events still fire, so the guard keeps
+         * the child cascade handlers out of this sync. Otherwise unticking a
+         * parent here would untick every sibling of the child the user cleared.
+         */
+        _syncParentStates: function () {
+            var instance = this.element.jstree(true),
+                nodes,
+                i;
+            if (!instance) {
+                return;
+            }
+            nodes = instance.get_json('#', { flat: true }) || [];
+            this._syncingParents = true;
+            try {
+                for (i = nodes.length - 1; i >= 0; i--) {
+                    this._syncParentState(instance, instance.get_node(nodes[i].id));
+                }
+            } finally {
+                this._syncingParents = false;
+            }
+        },
+
+        _syncParentState: function (instance, node) {
+            var enabled,
+                allTicked;
+            if (!node || !Array.isArray(node.children) || !node.children.length) {
+                return;
+            }
+            enabled = node.children
+                .map(function (id) {
+                    return instance.get_node(id);
+                })
+                .filter(function (child) {
+                    return child && !(child.state && child.state.disabled);
+                });
+            allTicked = enabled.length > 0 && enabled.every(function (child) {
+                return instance.is_selected(child);
+            });
+            if (allTicked && !instance.is_selected(node)) {
+                instance.select_node(node, true, true);
+            } else if (!allTicked && instance.is_selected(node)) {
+                instance.deselect_node(node, true);
+            }
+        },
+
+        _cloneTree: function (nodes) {
+            try {
+                return JSON.parse(JSON.stringify(nodes || []));
+            } catch (e) {
+                return [];
+            }
+        },
+
+        _applySelection: function (nodes, selection) {
+            var i;
+            if (!Array.isArray(nodes)) {
+                return [];
+            }
+            for (i = 0; i < nodes.length; i++) {
+                if (!nodes[i]) {
+                    continue;
+                }
+                if (!nodes[i].state) {
+                    nodes[i].state = {};
+                }
+                if (selection.indexOf(nodes[i].id) !== -1 && !nodes[i].state.disabled) {
+                    nodes[i].state.selected = true;
+                }
+                if (Array.isArray(nodes[i].children) && nodes[i].children.length) {
+                    nodes[i].children = this._applySelection(nodes[i].children, selection);
+                }
+            }
+            return nodes;
+        },
+
+        /**
+         * Cascade a user tick down to the enabled children. The children are
+         * ticked silently: the `changed.jstree` of the clicked node fires after
+         * this handler and runs one parent sync for the whole tree.
+         */
+        _selectChildNodes: function (event, selected) {
+            if (this._syncingParents) {
+                return;
+            }
+            selected.instance.open_node(selected.node);
+            selected.node.children.forEach(function (id) {
+                var child = selected.instance.get_node(id);
+                if (child && (!child.state || !child.state.disabled)) {
+                    selected.instance.select_node(child, true);
+                }
+            });
+        },
+
+        _deselectChildNodes: function (event, selected) {
+            if (this._syncingParents) {
+                return;
+            }
+            selected.node.children.forEach(function (id) {
+                var child = selected.instance.get_node(id);
+                if (child) {
+                    selected.instance.deselect_node(child, true);
+                }
+            });
+        },
+
+        _bindAdminUserChange: function () {
+            var widget = this;
+            if (!this.options.adminUserSelector) {
+                return;
+            }
+            $(document).on('change.mcpScopesTree', this.options.adminUserSelector, function () {
+                var preserved = widget._collectSelectedIds();
+                widget._fetchTree($(this).val(), preserved);
+                widget._refreshAdminPlaceholder();
+            });
+        },
+
+        _bindToggleAllResources: function () {
+            var widget = this;
+            if (!this.options.allResourcesSelector || !this.options.treeContainerSelector) {
+                return;
+            }
+            $(document).on('change.mcpScopesTree', this.options.allResourcesSelector, function () {
+                var allSelected = $(this).val() === '1';
+                $(widget.options.treeContainerSelector).toggleClass('no-display', allSelected);
+                widget._syncSelections();
+            });
+        },
+
+        _bindAllowAllButton: function () {
+            var widget = this;
+            if (!this.options.allowAllSelector) {
+                return;
+            }
+            $(document).on('click.mcpScopesTree', this.options.allowAllSelector, function (e) {
+                e.preventDefault();
+                if (!widget.element.data('jstree')) {
+                    return;
+                }
+                // jstree's select_all honours our check_callback so disabled
+                // nodes (role-blocked) stay unticked even on a bulk select.
+                widget.element.jstree('select_all');
+                widget._syncSelections();
+            });
+        },
+
+        _bindAllowAllFutureToggle: function () {
+            var widget = this;
+            if (!this.options.allowAllFutureSelector) {
+                return;
+            }
+            $(document).on('change.mcpScopesTree', this.options.allowAllFutureSelector, function () {
+                widget._refreshAllowAllFutureSectionVisibility();
+                widget._syncSelections();
+            });
+        },
+
+        _isAllowAllFutureChecked: function () {
+            if (!this.options.allowAllFutureSelector) {
+                return false;
+            }
+            return $(this.options.allowAllFutureSelector).is(':checked');
+        },
+
+        _refreshAllowAllFutureSectionVisibility: function () {
+            if (!this.options.allowAllFutureSectionSelector) {
+                return;
+            }
+            $(this.options.allowAllFutureSectionSelector)
+                .toggleClass('no-display', this._isAllowAllFutureChecked());
+        },
+
+        _bindFormSubmitGuard: function () {
+            var widget = this;
+            $(document).on('submit.mcpScopesTree', this.options.editFormSelector, function () {
+                widget._syncSelections();
+            });
+        },
+
+        _fetchTree: function (adminUserId, preservedSelection) {
+            var widget = this;
+            $.ajax({
+                url: this.options.treeUrl,
+                method: 'GET',
+                dataType: 'json',
+                data: { admin_user_id: adminUserId || 0 }
+            }).done(function (response) {
+                if (response && Array.isArray(response.tree)) {
+                    widget._renderTree(response.tree, preservedSelection || []);
+                    widget._syncSelections();
+                }
+            });
+        },
+
+        applySelection: function (resourceIds) {
+            this._renderTree(
+                this.options.initialTree || [],
+                Array.isArray(resourceIds) ? resourceIds : []
+            );
+            this._syncSelections();
+        },
+
+        _collectSelectedIds: function () {
+            if (!this.element.data('jstree')) {
+                return [];
+            }
+            var instance = this.element.jstree(true);
+            if (!instance) {
+                return [];
+            }
+            var selected = instance.get_checked() || [];
+            var undetermined = instance.get_undetermined() || [];
+            return selected.concat(undetermined);
+        },
+
+        _syncSelections: function () {
+            var form = $(this.options.editFormSelector);
+            if (!form.length) {
+                return;
+            }
+            form.find('input[name="' + this.options.resourceFieldName + '"]').remove();
+
+            // Wildcard mode wins — server collapses to ['*'] and ignores resource[].
+            if (this._isAllowAllFutureChecked()) {
+                return;
+            }
+
+            var allResourcesField = this.options.allResourcesSelector
+                ? $(this.options.allResourcesSelector)
+                : $();
+            if (allResourcesField.length && allResourcesField.val() === '1') {
+                return;
+            }
+
+            var ids = this._collectSelectedIds();
+            var fieldName = this.options.resourceFieldName;
+            ids.forEach(function (id) {
+                $('<input>', {
+                    type: 'hidden',
+                    name: fieldName,
+                    value: id
+                }).appendTo(form);
+            });
+        },
+
+        _destroy: function () {
+            if (this.element.data('jstree')) {
+                this.element.jstree('destroy');
+            }
+            this.element.off('.mcpScopesTree');
+            $(document).off('.mcpScopesTree');
+        }
+    });
+
+    return $.mage.mcpScopesTree;
+});

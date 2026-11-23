@@ -1,0 +1,67 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Test\Api;
+
+/**
+ * `tools/list` shape + core-tool presence.
+ *
+ * @magentoApiDataFixture Magento/User/_files/user_with_role.php
+ */
+class ToolsListTest extends McpTestCase
+{
+    /**
+     * Tools that this module ships and that adminUser's full-perm role grants.
+     * Names are emitted in the dot→underscore wire form because Claude.ai's
+     * frontend rejects dots — the canonical identity stays internal.
+     */
+    private const REQUIRED_TOOLS = [
+        'system_whoami',
+        'system_store_list',
+        'system_store_info',
+        'system_config_get',
+    ];
+
+    protected ?bool $allowWrites = true;
+
+    public function testReturnsCoreTools(): void
+    {
+        $response = $this->toolsList();
+
+        $this->assertJsonRpcSuccess($response);
+        $body = $response['body'];
+        self::assertIsArray($body);
+        $result = $body['result'] ?? null;
+        self::assertIsArray($result);
+        $tools = $result['tools'] ?? null;
+        self::assertIsArray($tools);
+        self::assertGreaterThanOrEqual(14, count($tools), sprintf(
+            'Expected at least 14 tools; got %d.',
+            count($tools)
+        ));
+
+        $byName = [];
+        foreach ($tools as $tool) {
+            self::assertIsArray($tool);
+            self::assertArrayHasKey('name', $tool);
+            self::assertArrayHasKey('description', $tool);
+            self::assertArrayHasKey('inputSchema', $tool);
+            self::assertIsString($tool['name']);
+            self::assertIsString($tool['description']);
+            self::assertIsArray($tool['inputSchema']);
+            $byName[$tool['name']] = $tool;
+        }
+
+        foreach (self::REQUIRED_TOOLS as $required) {
+            self::assertArrayHasKey($required, $byName, sprintf(
+                'Core tool "%s" missing from tools/list.',
+                $required
+            ));
+        }
+    }
+}

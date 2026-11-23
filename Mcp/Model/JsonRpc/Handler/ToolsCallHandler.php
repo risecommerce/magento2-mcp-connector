@@ -1,0 +1,465 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Model\JsonRpc\Handler;
+
+use Risecommerce\Mcp\Api\ContextualAclAwareInterface;
+use Risecommerce\Mcp\Api\Data\AuditEntryInterface;
+use Risecommerce\Mcp\Api\LoggerInterface;
+use Risecommerce\Mcp\Api\RateLimiterInterface;
+use Risecommerce\Mcp\Api\ToolInterface;
+use Risecommerce\Mcp\Api\ToolRegistryInterface;
+use Risecommerce\Mcp\Api\UnderlyingAclAwareInterface;
+use Risecommerce\Mcp\Exception\ForbiddenException;
+use Risecommerce\Mcp\Exception\RateLimitedException;
+use Risecommerce\Mcp\Exception\SchemaValidationException;
+use Risecommerce\Mcp\Model\Acl\AclChecker;
+use Risecommerce\Mcp\Model\Auth\AuthenticatedContext;
+use Risecommerce\Mcp\Model\Auth\AuthenticatedContextProvider;
+use Risecommerce\Mcp\Model\Auth\WriteAccess;
+use Risecommerce\Mcp\Model\AuditLog\AuditContext;
+use Risecommerce\Mcp\Model\Config\ModuleConfig;
+use Risecommerce\Mcp\Model\JsonRpc\ErrorCode;
+use Risecommerce\Mcp\Model\JsonRpc\HandlerInterface;
+use Risecommerce\Mcp\Model\JsonRpc\Request;
+use Risecommerce\Mcp\Model\JsonRpc\Response;
+use Risecommerce\Mcp\Model\Tool\DisabledTools;
+use Risecommerce\Mcp\Model\Tool\SchemaSanitizer;
+use Risecommerce\Mcp\Model\Tool\ToolAvailability;
+use Risecommerce\Mcp\Model\Tool\WriteMode;
+use Risecommerce\Mcp\Model\Validator\ArgumentCoercer;
+use Risecommerce\Mcp\Model\Validator\JsonSchemaValidator;
+use Magento\Framework\Event\ManagerInterface as EventManager;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Throwable;
+
+/**
+ * Handles `tools/call`. The pipeline is a chain of named gates — each returns
+ * `null` to let the next gate run, or a {@see Response} to short-circuit.
+ *
+ * Order:
+ *   1. Resolve params + tool from registry; a disabled or unavailable tool answers like an unregistered one.
+ *   2. Token scope narrows allowed tools.
+ *   3. ACL — admin role + optional underlying-Magento and argument-derived contextual ACLs.
+ *   4. Write gate (WRITE tools require both server config and token flag).
+ *   5. Input schema validation.
+ *   6. Rate limiter.
+ *   7. Dispatch with before/after events; a {@see ForbiddenException} from the tool is a `-32004` refusal.
+ */
+class ToolsCallHandler implements HandlerInterface
+{
+    /**
+     * @param ToolRegistryInterface $toolRegistry
+     * @param AclChecker $aclChecker
+     * @param JsonSchemaValidator $schemaValidator
+     * @param RateLimiterInterface $rateLimiter
+     * @param EventManager $eventManager
+     * @param ModuleConfig $config
+     * @param AuditContext $auditContext
+     * @param AuthenticatedContextProvider $authenticatedContextProvider
+     * @param LoggerInterface $logger
+     * @param ArgumentCoercer $argumentCoercer
+     * @param SchemaSanitizer $schemaSanitizer
+     * @param DisabledTools $disabledTools
+     * @param ToolAvailability|null $toolAvailability Optional so existing callers keep working; wired in di.xml
+     */
+    public function __construct(
+        private readonly ToolRegistryInterface $toolRegistry,
+        private readonly AclChecker $aclChecker,
+        private readonly JsonSchemaValidator $schemaValidator,
+        private readonly RateLimiterInterface $rateLimiter,
+        private readonly EventManager $eventManager,
+        private readonly ModuleConfig $config,
+        private readonly AuditContext $auditContext,
+        private readonly AuthenticatedContextProvider $authenticatedContextProvider,
+        private readonly LoggerInterface $logger,
+        private readonly ArgumentCoercer $argumentCoercer,
+        private readonly SchemaSanitizer $schemaSanitizer,
+        private readonly DisabledTools $disabledTools,
+        private readonly ?ToolAvailability $toolAvailability = null
+    ) {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function method(): string
+    {
+        return 'tools/call';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function handle(Request $request, AuthenticatedContext $context): Response
+    {
+        $resolution = $this->resolveTool($request);
+        if ($resolution instanceof Response) {
+            return $resolution;
+        }
+        [$tool, $args] = $resolution;
+
+        // Coerce toward the sanitized wire schema — the exact representation the
+        // client saw on `tools/list` — so validation and execute() agree on shape.
+        $schema = $this->schemaSanitizer->sanitize($tool->getName(), $tool->getInputSchema());
+        $args = $this->argumentCoercer->coerce($schema, $args);
+        $this->auditContext->arguments = $args;
+
+        foreach ([
+            fn (): ?Response => $this->checkTokenScope($request, $context, $tool),
+            fn (): ?Response => $this->checkAcl($request, $context, $tool, $args),
+            fn (): ?Response => $this->checkWriteGate($request, $context, $tool),
+            fn (): ?Response => $this->validateInputSchema($request, $schema, $args),
+            fn (): ?Response => $this->checkRateLimit($request, $context, $tool),
+        ] as $gate) {
+            $response = $gate();
+            if ($response !== null) {
+                return $response;
+            }
+        }
+
+        return $this->dispatchTool($request, $context, $tool, $args);
+    }
+
+    /**
+     * @param Request $request
+     * @return Response|array{0: ToolInterface, 1: array<string, mixed>}
+     */
+    private function resolveTool(Request $request): Response|array
+    {
+        $requested = $request->params['name'] ?? null;
+        if (!is_string($requested) || $requested === '') {
+            return $this->fail($request, ErrorCode::INVALID_PARAMS, 'Missing or invalid "name" parameter.');
+        }
+        // Stamp the audit row with what the client sent before resolving — if the name
+        // doesn't map to a tool, operators still see the verbatim request.
+        $this->auditContext->toolName = $requested;
+
+        $canonical = $this->toolRegistry->getCanonicalName($requested);
+        if ($canonical === null) {
+            return $this->failNotRegistered($request, $requested);
+        }
+        // One name per tool in the audit log: the dotted canonical name, whichever form the client sent
+        // and whether or not the call is refused below.
+        $this->auditContext->toolName = $canonical;
+        // An admin-disabled tool is indistinguishable from an unregistered one on the wire.
+        if ($this->disabledTools->isDisabled($canonical)) {
+            return $this->failNotRegistered($request, $requested);
+        }
+        try {
+            $tool = $this->toolRegistry->get($canonical);
+        } catch (NoSuchEntityException) {
+            return $this->failNotRegistered($request, $requested);
+        }
+        // A tool whose optional feature is missing is not installed for any role, so it is not a role refusal.
+        if ($this->toolAvailability !== null && !$this->toolAvailability->isAvailable($tool)) {
+            return $this->failNotRegistered($request, $requested);
+        }
+
+        $argsRaw = $request->params['arguments'] ?? [];
+        if (!is_array($argsRaw)) {
+            return $this->fail($request, ErrorCode::INVALID_PARAMS, 'Parameter "arguments" must be an object.');
+        }
+        /** @var array<string, mixed> $args */
+        $args = $argsRaw;
+        $this->auditContext->arguments = $args;
+
+        return [$tool, $args];
+    }
+
+    /**
+     * @param Request $request
+     * @param AuthenticatedContext $context
+     * @param ToolInterface $tool
+     * @return Response|null
+     */
+    private function checkTokenScope(Request $request, AuthenticatedContext $context, ToolInterface $tool): ?Response
+    {
+        $scopes = $context->token->getScopes();
+        if ($scopes !== null && !in_array($tool->getName(), $scopes, true)) {
+            return $this->fail($request, ErrorCode::FORBIDDEN, 'Token scope does not include this tool.');
+        }
+        return null;
+    }
+
+    /**
+     * @param Request $request
+     * @param AuthenticatedContext $context
+     * @param ToolInterface $tool
+     * @param array $arguments
+     * @phpstan-param array<string, mixed> $arguments
+     * @return Response|null
+     */
+    private function checkAcl(
+        Request $request,
+        AuthenticatedContext $context,
+        ToolInterface $tool,
+        array $arguments
+    ): ?Response {
+        if (!$this->aclChecker->isAllowed($context->adminUser, $tool->getAclResource())) {
+            return $this->fail($request, ErrorCode::FORBIDDEN, 'Your admin role does not permit this tool.');
+        }
+
+        if ($tool instanceof UnderlyingAclAwareInterface) {
+            $underlying = $tool->getUnderlyingAclResource();
+            if ($underlying !== null
+                && !$this->aclChecker->isAllowed($context->adminUser, $underlying)
+            ) {
+                // Preserves the "MCP cannot do what the admin UI cannot" invariant.
+                return $this->fail(
+                    $request,
+                    ErrorCode::FORBIDDEN,
+                    'Your admin role does not permit the underlying Magento action.'
+                );
+            }
+        }
+
+        if ($tool instanceof ContextualAclAwareInterface) {
+            return $this->checkContextualAcl($request, $context, $tool, $arguments);
+        }
+        return null;
+    }
+
+    /**
+     * @param Request $request
+     * @param AuthenticatedContext $context
+     * @param ToolInterface&ContextualAclAwareInterface $tool
+     * @param array $arguments
+     * @phpstan-param array<string, mixed> $arguments
+     * @return Response|null
+     */
+    private function checkContextualAcl(
+        Request $request,
+        AuthenticatedContext $context,
+        ToolInterface&ContextualAclAwareInterface $tool,
+        array $arguments
+    ): ?Response {
+        try {
+            foreach ($tool->getContextualAclResources($arguments) as $resource) {
+                if ($resource === '') {
+                    return $this->failUnresolvedContextualAcl($request, $tool, null);
+                }
+                if (!$this->aclChecker->isAllowed($context->adminUser, $resource)) {
+                    return $this->fail(
+                        $request,
+                        ErrorCode::FORBIDDEN,
+                        'Your admin role does not permit the Magento section this call targets.'
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            // Arguments reach the resolver unvalidated, so a throw (or a non-string entry) is
+            // reachable from client input; a gate that cannot name its resource must refuse.
+            return $this->failUnresolvedContextualAcl($request, $tool, $e);
+        }
+        return null;
+    }
+
+    /**
+     * Distinct from a permission refusal — the tool failed to state what it needs, so the
+     * operator should not go looking at role permissions.
+     *
+     * @param Request $request
+     * @param ToolInterface $tool
+     * @param Throwable|null $exception
+     * @return Response
+     */
+    private function failUnresolvedContextualAcl(
+        Request $request,
+        ToolInterface $tool,
+        ?Throwable $exception
+    ): Response {
+        $this->logger->error('MCP contextual ACL resolution failed; refusing the call.', [
+            'tool' => $tool->getName(),
+            'exception' => $exception,
+        ]);
+        return $this->fail(
+            $request,
+            ErrorCode::FORBIDDEN,
+            'Could not determine which Magento permission this call requires; the call was refused.'
+        );
+    }
+
+    /**
+     * @param Request $request
+     * @param AuthenticatedContext $context
+     * @param ToolInterface $tool
+     * @return Response|null
+     */
+    private function checkWriteGate(Request $request, AuthenticatedContext $context, ToolInterface $tool): ?Response
+    {
+        if ($tool->getWriteMode() !== WriteMode::WRITE) {
+            return null;
+        }
+        $writeAccess = WriteAccess::resolve($this->config, $context);
+        if (!$writeAccess->isAllowed()) {
+            return $this->fail(
+                $request,
+                ErrorCode::WRITE_NOT_ALLOWED,
+                'Write tools are ' . $writeAccess->describeClosedLayer() . '.',
+                ['reason' => $writeAccess->getClosedReason()]
+            );
+        }
+        return null;
+    }
+
+    /**
+     * @param Request $request
+     * @param array<string, mixed> $schema
+     * @param array<string, mixed> $args
+     * @return Response|null
+     */
+    private function validateInputSchema(Request $request, array $schema, array $args): ?Response
+    {
+        try {
+            $this->schemaValidator->validate($schema, $args);
+        } catch (SchemaValidationException $e) {
+            return $this->fail(
+                $request,
+                ErrorCode::SCHEMA_VALIDATION_FAILED,
+                $e->getMessage(),
+                ['errors' => $e->getErrors()]
+            );
+        }
+        return null;
+    }
+
+    /**
+     * @param Request $request
+     * @param AuthenticatedContext $context
+     * @param ToolInterface $tool
+     * @return Response|null
+     */
+    private function checkRateLimit(Request $request, AuthenticatedContext $context, ToolInterface $tool): ?Response
+    {
+        try {
+            $this->rateLimiter->check($context->getAdminUserId(), $tool->getName());
+        } catch (RateLimitedException $e) {
+            return $this->fail(
+                $request,
+                ErrorCode::RATE_LIMITED,
+                $e->getMessage(),
+                [
+                    'limit' => $e->getLimit(),
+                    'retry_after_seconds' => $e->getRetryAfterSeconds(),
+                ]
+            );
+        }
+        return null;
+    }
+
+    /**
+     * @param Request $request
+     * @param AuthenticatedContext $context
+     * @param ToolInterface $tool
+     * @param array<string, mixed> $args
+     * @return Response
+     */
+    private function dispatchTool(
+        Request $request,
+        AuthenticatedContext $context,
+        ToolInterface $tool,
+        array $args
+    ): Response {
+        $this->authenticatedContextProvider->set($context);
+        $this->eventManager->dispatch('risecommerce_mcp_tool_call_before', [
+            'tool' => $tool,
+            'arguments' => $args,
+            'admin_user' => $context->adminUser,
+            'token' => $context->token,
+        ]);
+
+        $startedAt = microtime(true);
+        try {
+            $result = $tool->execute($args);
+            $exception = null;
+        } catch (Throwable $e) {
+            $result = null;
+            $exception = $e;
+        }
+        $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+        $this->auditContext->durationMs = $durationMs;
+
+        $this->eventManager->dispatch('risecommerce_mcp_tool_call_after', [
+            'tool' => $tool,
+            'arguments' => $args,
+            'result' => $result,
+            'exception' => $exception,
+            'duration_ms' => $durationMs,
+            'admin_user' => $context->adminUser,
+            'token' => $context->token,
+        ]);
+
+        if ($exception !== null) {
+            // A run-time scope or permission refusal answers exactly like the pre-execution ACL gates.
+            if ($exception instanceof ForbiddenException) {
+                $data = $exception->getData();
+                return $this->fail(
+                    $request,
+                    ErrorCode::FORBIDDEN,
+                    $exception->getMessage(),
+                    $data === [] ? null : $data
+                );
+            }
+            // LocalizedException messages are the tool's published contract — safe to
+            // surface. Anything else may embed stack traces / SQL / paths; log + generic.
+            if ($exception instanceof LocalizedException) {
+                return $this->fail($request, ErrorCode::TOOL_EXECUTION_FAILED, $exception->getMessage());
+            }
+            $this->logger->error('MCP tool raised unexpected exception.', [
+                'tool' => $tool->getName(),
+                'exception' => $exception,
+            ]);
+            return $this->fail($request, ErrorCode::TOOL_EXECUTION_FAILED, 'Tool execution failed.');
+        }
+
+        $this->auditContext->resultSummary = $result->getAuditSummary();
+        if ($result->isError()) {
+            $this->auditContext->responseStatus = AuditEntryInterface::STATUS_ERROR;
+        }
+
+        return Response::success($request->id, [
+            'content' => $result->getContent(),
+            'isError' => $result->isError(),
+        ]);
+    }
+
+    /**
+     * The one place unresolvable, disabled and unregistered tool names all answer from — an
+     * admin-disabled tool stays indistinguishable from one that never existed only if they match.
+     *
+     * @param Request $request
+     * @param string $requested
+     * @return Response
+     */
+    private function failNotRegistered(Request $request, string $requested): Response
+    {
+        return $this->fail(
+            $request,
+            ErrorCode::TOOL_NOT_FOUND,
+            sprintf('Tool "%s" is not registered.', $requested)
+        );
+    }
+
+    /**
+     * Stamp audit state and build a failure response in one place.
+     *
+     * @param Request $request
+     * @param ErrorCode $code
+     * @param string $message
+     * @param array<string, mixed>|null $data
+     * @return Response
+     */
+    private function fail(Request $request, ErrorCode $code, string $message, ?array $data = null): Response
+    {
+        $this->auditContext->responseStatus = AuditEntryInterface::STATUS_ERROR;
+        $this->auditContext->errorCode = (string) $code->value;
+        return Response::failure($request->id, $code, $message, $data);
+    }
+}

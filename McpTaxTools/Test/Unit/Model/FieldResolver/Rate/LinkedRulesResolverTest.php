@@ -1,0 +1,58 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\McpTaxTools\Test\Unit\Model\FieldResolver\Rate;
+
+use Risecommerce\McpTaxTools\Model\FieldResolver\Rate\LinkedRulesResolver;
+use Risecommerce\McpTaxTools\Model\RuleRateIndex;
+use Magento\Tax\Api\Data\TaxRateInterface;
+use PHPUnit\Framework\TestCase;
+
+class LinkedRulesResolverTest extends TestCase
+{
+    public function testALinkedRateIsNotFlaggedAsOrphaned(): void
+    {
+        $index = $this->createMock(RuleRateIndex::class);
+        $index->method('rulesForRate')->with(3)->willReturn([['id' => 1, 'code' => 'Rule1']]);
+
+        $rate = $this->createMock(TaxRateInterface::class);
+        $rate->method('getId')->willReturn(3);
+
+        $this->assertSame(
+            [
+                'rules' => [['id' => 1, 'code' => 'Rule1']],
+                'orphaned' => false,
+            ],
+            (new LinkedRulesResolver($index))->resolve($rate, [])
+        );
+    }
+
+    public function testAnUnlinkedRateIsFlaggedAsOrphaned(): void
+    {
+        $index = $this->createMock(RuleRateIndex::class);
+        $index->method('rulesForRate')->with(1)->willReturn([]);
+
+        $rate = $this->createMock(TaxRateInterface::class);
+        $rate->method('getId')->willReturn(1);
+
+        $this->assertSame(
+            [
+                'rules' => [],
+                'orphaned' => true,
+            ],
+            (new LinkedRulesResolver($index))->resolve($rate, [])
+        );
+    }
+
+    public function testKeyAndSortOrder(): void
+    {
+        $resolver = new LinkedRulesResolver($this->createMock(RuleRateIndex::class));
+        $this->assertSame('linked_rules', $resolver->getKey());
+        $this->assertSame(30, $resolver->getSortOrder());
+    }
+}

@@ -1,0 +1,101 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Console\Command;
+
+use Risecommerce\Mcp\Api\ToolRegistryInterface;
+use Risecommerce\Mcp\Api\UnderlyingAclAwareInterface;
+use Magento\Framework\Acl\AclResource\ProviderInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+/**
+ * `bin/magento risecommerce:mcp:tools:validate-acl` — CI gate that catches tools whose
+ * `getAclResource()` is missing from the merged acl.xml tree. Underlying resources
+ * are reported too, but only as a warning — they belong to other modules.
+ */
+class ValidateAclCommand extends Command
+{
+    public function __construct(
+        private readonly ToolRegistryInterface $toolRegistry,
+        private readonly ProviderInterface $aclResourceProvider
+    ) {
+        parent::__construct();
+    }
+
+    protected function configure(): void
+    {
+        $this->setName('risecommerce:mcp:tools:validate-acl')
+            ->setDescription('Fail if any registered MCP tool references an ACL resource not declared in acl.xml.');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $declared = $this->flattenResourceIds($this->aclResourceProvider->getAclResources());
+        $missing = [];
+        $missingUnderlying = [];
+
+        foreach ($this->toolRegistry->all() as $tool) {
+            $resource = $tool->getAclResource();
+            if (!in_array($resource, $declared, true)) {
+                $missing[] = sprintf('%s → %s', $tool->getName(), $resource);
+            }
+
+            $underlying = $tool instanceof UnderlyingAclAwareInterface
+                ? $tool->getUnderlyingAclResource()
+                : null;
+            if ($underlying !== null && !in_array($underlying, $declared, true)) {
+                $missingUnderlying[] = sprintf('%s → %s', $tool->getName(), $underlying);
+            }
+        }
+
+        if ($missing !== []) {
+            $output->writeln('<error>MCP tools referencing undeclared ACL resources:</error>');
+            foreach ($missing as $row) {
+                $output->writeln(' - ' . $row);
+            }
+            return Command::FAILURE;
+        }
+
+        if ($missingUnderlying !== []) {
+            // Warning, not a failure: the resource belongs to another module, which
+            // may legitimately be absent on this install.
+            $output->writeln('<comment>MCP tools whose underlying ACL resource does not resolve here:</comment>');
+            foreach ($missingUnderlying as $row) {
+                $output->writeln(' - ' . $row);
+            }
+            $output->writeln('<comment>These tools stay hidden from tools/list for every role.</comment>');
+        }
+
+        $output->writeln('<info>OK — every registered MCP tool has its ACL resource declared.</info>');
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $resources
+     * @return array<int, string>
+     */
+    private function flattenResourceIds(array $resources): array
+    {
+        $ids = [];
+        foreach ($resources as $resource) {
+            if (isset($resource['id']) && is_string($resource['id'])) {
+                $ids[] = $resource['id'];
+            }
+            if (isset($resource['children']) && is_array($resource['children'])) {
+                /** @var array<int, array<string, mixed>> $children */
+                $children = $resource['children'];
+                foreach ($this->flattenResourceIds($children) as $childId) {
+                    $ids[] = $childId;
+                }
+            }
+        }
+        return $ids;
+    }
+}

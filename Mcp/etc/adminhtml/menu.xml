@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Risecommerce_Mcp::mcp"
+             title="MCP"
+             module="Risecommerce_Mcp"
+             sortOrder="45"
+             parent="Magento_Backend::system"
+             resource="Risecommerce_Mcp::mcp"/>
+        <add id="Risecommerce_Mcp::mcp_tokens"
+             title="Connections"
+             module="Risecommerce_Mcp"
+             sortOrder="10"
+             parent="Risecommerce_Mcp::mcp"
+             action="risecommerce_mcp/token/index"
+             resource="Risecommerce_Mcp::mcp_tokens"/>
+        <add id="Risecommerce_Mcp::mcp_oauth_clients"
+             title="OAuth Clients"
+             module="Risecommerce_Mcp"
+             sortOrder="15"
+             parent="Risecommerce_Mcp::mcp"
+             action="risecommerce_mcp/oauthclient/index"
+             resource="Risecommerce_Mcp::mcp_oauth_clients"/>
+        <add id="Risecommerce_Mcp::mcp_prompts"
+             title="Prompts"
+             module="Risecommerce_Mcp"
+             sortOrder="17"
+             parent="Risecommerce_Mcp::mcp"
+             action="risecommerce_mcp/prompt/index"
+             resource="Risecommerce_Mcp::mcp_prompts"/>
+        <add id="Risecommerce_Mcp::mcp_audit"
+             title="Audit Log"
+             module="Risecommerce_Mcp"
+             sortOrder="20"
+             parent="Risecommerce_Mcp::mcp"
+             action="risecommerce_mcp/auditlog/index"
+             resource="Risecommerce_Mcp::mcp_audit"/>
+        <add id="Risecommerce_Mcp::mcp_tool_management"
+             title="Tools"
+             module="Risecommerce_Mcp"
+             sortOrder="25"
+             parent="Risecommerce_Mcp::mcp"
+             action="risecommerce_mcp/tools/index"
+             resource="Risecommerce_Mcp::mcp_tool_management"/>
+    </menu>
+</config>

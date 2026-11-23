@@ -1,0 +1,259 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Register every read tool with the base module's ToolRegistry. -->
+    <type name="Risecommerce\Mcp\Model\Tool\ToolRegistry">
+        <arguments>
+            <argument name="tools" xsi:type="array">
+                <item name="sales.order.list" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\OrderList
+                </item>
+                <item name="sales.order.get" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\OrderGet
+                </item>
+                <item name="sales.order.item.list" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\OrderItemList
+                </item>
+                <item name="sales.order.invoices" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\InvoiceList
+                </item>
+                <item name="sales.order.invoice.get" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\InvoiceGet
+                </item>
+                <item name="sales.order.shipments" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\ShipmentList
+                </item>
+                <item name="sales.order.shipment.get" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\ShipmentGet
+                </item>
+                <item name="sales.order.payment" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\PaymentGet
+                </item>
+                <item name="sales.order.comments" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\CommentList
+                </item>
+                <item name="sales.order.credit_memos" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\CreditMemoList
+                </item>
+                <item name="sales.order.credit_memo.get" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\CreditMemoGet
+                </item>
+
+                <!-- Write tools -->
+                <item name="sales.order.invoice.create" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\InvoiceCreate
+                </item>
+                <item name="sales.order.shipment.create" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\ShipmentCreate
+                </item>
+                <item name="sales.order.shipment.track.add" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\ShipmentTrackAdd
+                </item>
+                <item name="sales.order.credit_memo.create" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\CreditMemoCreate
+                </item>
+                <item name="sales.order.cancel" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\Cancel
+                </item>
+                <item name="sales.order.hold" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\Hold
+                </item>
+                <item name="sales.order.unhold" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\Unhold
+                </item>
+                <item name="sales.order.comment.add" xsi:type="object">
+                    Risecommerce\McpOrderTools\Tool\Sales\Order\CommentAdd
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Response-side allowlist for payment `additional_information`. Empty by
+         default so no PSP secrets leak to the MCP client; operators add only the
+         keys they explicitly want exposed (e.g. a method title). This is NOT the
+         audit-log PII redactor — it filters the response payload itself. -->
+    <type name="Risecommerce\McpOrderTools\Model\Payment\AdditionalInformationFilter">
+        <arguments>
+            <argument name="allowlist" xsi:type="array"/>
+        </arguments>
+    </type>
+
+    <!-- Order field resolvers (shared between `sales.order.get` and a
+         narrower subset for `sales.order.list`). -->
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\OrderGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\StateResolver
+                </item>
+                <item name="customer" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\CustomerResolver
+                </item>
+                <item name="addresses" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\AddressResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\ItemsResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\TotalsResolver
+                </item>
+                <item name="payment" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\PaymentResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- `items` is wrapped in OnDemandResolver: list rows include it only
+         when the caller explicitly asks via fields:["items"], so default
+         list payloads stay small and no per-order item loading happens. -->
+    <virtualType name="Risecommerce\McpOrderTools\Model\FieldResolver\Order\OnDemandItemsResolver"
+                 type="Risecommerce\McpOrderTools\Model\FieldResolver\Order\OnDemandResolver">
+        <arguments>
+            <argument name="inner" xsi:type="object">
+                Risecommerce\McpOrderTools\Model\FieldResolver\Order\ItemsResolver
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\OrderList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\StateResolver
+                </item>
+                <item name="customer" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\CustomerResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\OnDemandItemsResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\TotalsResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Order\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Invoice resolvers. -->
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\InvoiceGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\StateResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\TotalsResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\ItemsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\InvoiceList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\StateResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Invoice\TotalsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Shipment resolvers. -->
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\ShipmentGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Shipment\IdentityResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Shipment\ItemsResolver
+                </item>
+                <item name="tracks" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Shipment\TracksResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\ShipmentList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Shipment\IdentityResolver
+                </item>
+                <item name="tracks" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Shipment\TracksResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Credit memo resolvers. -->
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\CreditMemoGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\CreditMemo\IdentityResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\CreditMemo\TotalsResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\CreditMemo\ItemsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\CreditMemoList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\CreditMemo\IdentityResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\CreditMemo\TotalsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Order comments. -->
+    <type name="Risecommerce\McpOrderTools\Tool\Sales\Order\CommentList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Comment\IdentityResolver
+                </item>
+                <item name="body" xsi:type="object">
+                    Risecommerce\McpOrderTools\Model\FieldResolver\Comment\BodyResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

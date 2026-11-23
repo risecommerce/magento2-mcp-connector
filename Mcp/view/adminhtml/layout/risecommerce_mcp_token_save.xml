@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      layout="admin-1column"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Risecommerce_Mcp::css/oauth-credentials.css"/>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <block class="Risecommerce\Mcp\Block\Adminhtml\Token\Created"
+                   name="mcp.token.created"
+                   template="Risecommerce_Mcp::token/created.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

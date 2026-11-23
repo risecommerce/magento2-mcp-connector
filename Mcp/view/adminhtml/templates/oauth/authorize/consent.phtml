@@ -1,0 +1,70 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ *
+ * @var \Magento\Backend\Block\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+declare(strict_types=1);
+
+use Risecommerce\Mcp\Model\OAuth\Client;
+use Risecommerce\Mcp\ViewModel\Oauth\Authorize\ConsentViewModel;
+
+/** @var ConsentViewModel $viewModel */
+$viewModel = $block->getData('view_model');
+/** @var Client|null $client */
+$client = $block->getData('oauth_client');
+/** @var string $currentUrl */
+$currentUrl = $block->getData('current_url') ?? '';
+/** @var array<int, string> $preTicked */
+$preTicked = $block->getData('pre_ticked_tools') ?? [];
+$tree = $viewModel->getTreeForRender($client);
+?>
+<?php
+$isSharedMode = $viewModel->isSharedMode($client);
+$serviceAdminName = $viewModel->getServiceAdminDisplayName($client);
+?>
+<div class="mcp-oauth-consent">
+    <h1>Authorize MCP access</h1>
+    <p><strong><?= $escaper->escapeHtml($viewModel->getClientLabel($client)) ?></strong> wants to access your Magento store on your behalf.</p>
+    <?php if ($isSharedMode): ?>
+        <div class="mcp-oauth-consent__shared-banner">
+            <strong>This is a shared organization connector.</strong>
+            <?php if ($serviceAdminName !== null): ?>
+                The token approved here will be issued on behalf of
+                <strong><?= $escaper->escapeHtml($serviceAdminName) ?></strong>.
+                Everyone in the organization who uses this connector will act as that admin.
+            <?php else: ?>
+                The token approved here will be issued on behalf of a pinned service admin.
+                Everyone in the organization who uses this connector will act as that admin.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+    <p>Tick the tools you want to grant. Untick anything you don't want this client to have. The token issued will be limited to what you approve here, and to what your admin role would normally permit.</p>
+
+    <form method="post" id="mcp-oauth-consent-form" action="<?= $escaper->escapeUrl($currentUrl) ?>">
+        <input type="hidden" name="form_key" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>"/>
+
+        <fieldset class="mcp-oauth-consent__fieldset">
+            <legend class="mcp-oauth-consent__legend">Requested tools</legend>
+            <?php if ($tree === []): ?>
+                <p class="mcp-oauth-consent__empty">No registered MCP tools could be loaded.</p>
+            <?php else: ?>
+                <div class="tree x-tree"
+                     id="risecommerce-mcp-consent-tree"
+                     data-mage-init='<?= $escaper->escapeHtmlAttr($viewModel->getWidgetOptionsJson($client, $preTicked)) ?>'></div>
+            <?php endif; ?>
+        </fieldset>
+
+        <p class="mcp-oauth-consent__note">
+            Note: write tools also require the server-wide <em>Allow Write Tools</em> setting to be enabled.
+        </p>
+
+        <button type="submit" name="oauth_action" value="approve"
+                class="mcp-oauth-consent__button mcp-oauth-consent__button--approve">Approve selected</button>
+        <button type="submit" name="oauth_action" value="deny"
+                class="mcp-oauth-consent__button mcp-oauth-consent__button--deny">Deny</button>
+    </form>
+</div>

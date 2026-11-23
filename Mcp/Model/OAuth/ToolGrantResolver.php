@@ -1,0 +1,175 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Model\OAuth;
+
+use Risecommerce\Mcp\Api\Data\OAuth\ClientInterface;
+use Risecommerce\Mcp\Api\ToolRegistryInterface;
+use Risecommerce\Mcp\Model\Acl\AclChecker;
+use Risecommerce\Mcp\Model\Tool\WriteMode;
+use Magento\User\Model\User;
+
+/**
+ * Reduces consent-time inputs (client cap ∩ admin role ∩ ticked tools) into the granted
+ * tool list, the derived `allow_writes` flag, and the OAuth-protocol scope summary.
+ * Pure — shared by the Adminhtml authorize controller and the OAuth Token controller.
+ */
+class ToolGrantResolver
+{
+    /**
+     * @param ToolRegistryInterface $toolRegistry
+     * @param AclChecker $aclChecker
+     */
+    public function __construct(
+        private readonly ToolRegistryInterface $toolRegistry,
+        private readonly AclChecker $aclChecker
+    ) {
+    }
+
+    /**
+     * @param array<int, string> $clientAllowedTools
+     * @param array<int, string> $tickedTools
+     * @param User $admin
+     * @return array<int, string>
+     */
+    public function intersect(array $clientAllowedTools, array $tickedTools, User $admin): array
+    {
+        if ($clientAllowedTools === [] || $tickedTools === []) {
+            return [];
+        }
+
+        $tickedIndex = [];
+        foreach ($tickedTools as $name) {
+            // @phpstan-ignore function.alreadyNarrowedType
+            if (is_string($name) && $name !== '') {
+                $tickedIndex[$name] = true;
+            }
+        }
+        if ($tickedIndex === []) {
+            return [];
+        }
+
+        $tools = $this->toolRegistry->all();
+        if (self::isWildcard($clientAllowedTools)) {
+            $clientAllowedTools = array_keys($tools);
+        }
+        $granted = [];
+        $seen = [];
+        foreach ($clientAllowedTools as $toolName) {
+            // @phpstan-ignore function.alreadyNarrowedType
+            if (!is_string($toolName) || $toolName === '' || isset($seen[$toolName])) {
+                continue;
+            }
+            if (!isset($tickedIndex[$toolName])) {
+                continue;
+            }
+            if (!isset($tools[$toolName])) {
+                continue;
+            }
+            if (!$this->aclChecker->isAllowed($admin, $tools[$toolName]->getAclResource())) {
+                continue;
+            }
+            $seen[$toolName] = true;
+            $granted[] = $toolName;
+        }
+        return $granted;
+    }
+
+    /**
+     * `true` when at least one granted tool is a WRITE tool — drives the per-token
+     * `allow_writes` flag and the `mcp:write` scope-string suffix.
+     *
+     * @param array<int, string> $grantedTools
+     * @return bool
+     */
+    public function hasWriteTool(array $grantedTools): bool
+    {
+        $tools = $this->toolRegistry->all();
+        foreach ($grantedTools as $name) {
+            if (isset($tools[$name]) && $tools[$name]->getWriteMode() === WriteMode::WRITE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Render the OAuth-protocol scope summary for the granted tool set
+     * (`mcp:read`, `mcp:write`, or both). Empty list → empty string.
+     *
+     * @param array<int, string> $grantedTools
+     * @return string
+     */
+    public function summarizeScope(array $grantedTools): string
+    {
+        if ($grantedTools === []) {
+            return '';
+        }
+        $hasRead = false;
+        $hasWrite = false;
+        $tools = $this->toolRegistry->all();
+        foreach ($grantedTools as $name) {
+            if (!isset($tools[$name])) {
+                continue;
+            }
+            if ($tools[$name]->getWriteMode() === WriteMode::WRITE) {
+                $hasWrite = true;
+            } else {
+                $hasRead = true;
+            }
+        }
+        $parts = [];
+        if ($hasRead) {
+            $parts[] = Scope::READ->value;
+        }
+        if ($hasWrite) {
+            $parts[] = Scope::WRITE->value;
+        }
+        return implode(' ', $parts);
+    }
+
+    /**
+     * `true` when the stored cap is the single-element wildcard list — i.e. the
+     * admin chose "allow all current + future tools" on the OAuth client form.
+     *
+     * @param array<int, string> $clientAllowedTools
+     * @return bool
+     */
+    public static function isWildcard(array $clientAllowedTools): bool
+    {
+        return count($clientAllowedTools) === 1
+            && ($clientAllowedTools[array_key_first($clientAllowedTools)] ?? null)
+                === ClientInterface::ALLOW_ALL_TOOLS_SENTINEL;
+    }
+
+    /**
+     * `true` when granted set covers every tool the admin's role permits —
+     * used to decide whether to forward the wildcard sentinel onto the issued
+     * token vs. snapshotting the explicit list.
+     *
+     * @param array<int, string> $grantedTools
+     * @param User $admin
+     * @return bool
+     */
+    public function grantsAllAdminAccessibleTools(array $grantedTools, User $admin): bool
+    {
+        $adminAccessible = [];
+        foreach ($this->toolRegistry->all() as $tool) {
+            if ($this->aclChecker->isAllowed($admin, $tool->getAclResource())) {
+                $adminAccessible[] = $tool->getName();
+            }
+        }
+        if ($adminAccessible === []) {
+            return false;
+        }
+        sort($adminAccessible);
+        $granted = array_values($grantedTools);
+        sort($granted);
+        return $granted === $adminAccessible;
+    }
+}

@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Register every tool with the base module's ToolRegistry. -->
+    <type name="Risecommerce\Mcp\Model\Tool\ToolRegistry">
+        <arguments>
+            <argument name="tools" xsi:type="array">
+                <!-- Read tools -->
+                <item name="inventory.source.list" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Source\SourceList
+                </item>
+                <item name="inventory.source.get" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Source\SourceGet
+                </item>
+                <item name="inventory.stock.list" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockList
+                </item>
+                <item name="inventory.stock.get" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockGet
+                </item>
+                <item name="inventory.source_item.list" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\SourceItem\SourceItemList
+                </item>
+                <item name="inventory.salable_qty.get" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\SalableQty\SalableQtyGet
+                </item>
+                <item name="inventory.stock_item_configuration.get" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Configuration\StockItemConfigurationGet
+                </item>
+
+                <!-- Write tools -->
+                <item name="inventory.source.create" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Source\SourceCreate
+                </item>
+                <item name="inventory.source.update" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Source\SourceUpdate
+                </item>
+                <item name="inventory.stock.create" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockCreate
+                </item>
+                <item name="inventory.stock.update" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockUpdate
+                </item>
+                <item name="inventory.stock.delete" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockDelete
+                </item>
+                <item name="inventory.stock.assign_sources" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockAssignSources
+                </item>
+                <item name="inventory.stock.unassign_sources" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockUnassignSources
+                </item>
+                <item name="inventory.stock.set_sales_channels" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Stock\StockSetSalesChannels
+                </item>
+                <item name="inventory.source_item.set" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\SourceItem\SourceItemSet
+                </item>
+                <item name="inventory.source_item.delete" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\SourceItem\SourceItemDelete
+                </item>
+                <item name="inventory.stock_item_configuration.set" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Configuration\StockItemConfigurationSet
+                </item>
+                <item name="inventory.bulk.source_assign" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Bulk\BulkSourceAssign
+                </item>
+                <item name="inventory.bulk.source_unassign" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Bulk\BulkSourceUnassign
+                </item>
+                <item name="inventory.bulk.transfer" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Bulk\BulkTransfer
+                </item>
+                <item name="inventory.bulk.partial_transfer" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Tool\Inventory\Bulk\BulkPartialTransfer
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Replaces the catalog module's optimistic default so
+         `catalog.product.stock.set` warns on multi-source stores. -->
+    <preference for="Risecommerce\McpCatalogTools\Api\SingleSourceModeCheckerInterface"
+                type="Risecommerce\McpInventoryTools\Model\Stock\MsiSingleSourceModeChecker"/>
+
+    <!-- Bolt the MSI salable-quantity slice onto the catalog read tools. DI
+         array items merge, so the catalog module's own resolvers stay. -->
+    <type name="Risecommerce\McpCatalogTools\Tool\Catalog\Product\ProductGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="salable_qty" xsi:type="object">
+                    Risecommerce\McpInventoryTools\Model\FieldResolver\Product\SalableQtyResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

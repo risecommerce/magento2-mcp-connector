@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      layout="admin-2columns-left"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="editor"/>
+    <body>
+        <referenceContainer name="left">
+            <block class="Risecommerce\Mcp\Block\Adminhtml\AbstractEdit\Tabs" name="risecommerce_mcp_token_edit_tabs">
+                <arguments>
+                    <argument name="tab_id" xsi:type="string">risecommerce_mcp_token_edit_tabs</argument>
+                    <argument name="tab_title" xsi:type="string" translate="true">Token Settings</argument>
+                </arguments>
+                <block class="Risecommerce\Mcp\Block\Adminhtml\Token\Edit\Tab\Info"
+                       name="risecommerce_mcp_token_edit_tab_info"/>
+                <block class="Risecommerce\Mcp\Block\Adminhtml\Token\Edit\Tab\Scopes"
+                       name="risecommerce_mcp_token_edit_tab_scopes"
+                       template="Risecommerce_Mcp::token/edit/tab/scopes.phtml"/>
+                <action method="addTab">
+                    <argument name="name" xsi:type="string">info_section</argument>
+                    <argument name="block" xsi:type="string">risecommerce_mcp_token_edit_tab_info</argument>
+                </action>
+                <action method="addTab">
+                    <argument name="name" xsi:type="string">scopes_section</argument>
+                    <argument name="block" xsi:type="string">risecommerce_mcp_token_edit_tab_scopes</argument>
+                </action>
+            </block>
+        </referenceContainer>
+        <referenceContainer name="content">
+            <block class="Risecommerce\Mcp\Block\Adminhtml\Token\Edit" name="risecommerce_mcp_token_edit"/>
+        </referenceContainer>
+    </body>
+</page>

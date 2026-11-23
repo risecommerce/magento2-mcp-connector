@@ -1,0 +1,283 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="risecommerce_mcp" translate="label" type="text" sortOrder="500"
+                 showInDefault="1" showInWebsite="0" showInStore="0">
+            <class>separator-top</class>
+            <label>MCP Server</label>
+            <tab>risecommerce</tab>
+            <resource>Risecommerce_Mcp::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>General</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable MCP Server</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Master kill-switch. When disabled, every <code>POST /mcp</code> request
+                    returns HTTP 503 before authentication runs. Existing tokens remain intact.]]></comment>
+                </field>
+                <field id="server_name" translate="label comment" type="text" sortOrder="15"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Server Name</label>
+                    <comment><![CDATA[Advertised to MCP clients via <code>initialize.serverInfo.name</code>.
+                    Defaults to <code>Risecommerce MCP</code>; override per deployment so operators and AI clients
+                    can tell staging from production at a glance.]]></comment>
+                </field>
+                <field id="allow_writes" translate="label comment" type="select" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Allow Write Tools</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Global override. A token's <em>Allow write tools</em> flag is only
+                    honoured when this is <strong>Yes</strong>.]]></comment>
+                </field>
+                <field id="max_body_kb" translate="label comment" type="text" sortOrder="25"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Max Request Body (KB)</label>
+                    <comment><![CDATA[Largest accepted <code>POST /mcp</code> body. Default <code>256</code>.
+                    Raise this only if you upload product images through MCP — base64 inflates a file by
+                    roughly a third, so an 8 MB photo needs about <code>11000</code>. Clamped to 64–32768.
+                    <strong>Your web server has its own limit</strong>: raise nginx
+                    <code>client_max_body_size</code> / Apache <code>LimitRequestBody</code> to match, or
+                    large uploads are rejected before Magento sees them.]]></comment>
+                </field>
+            </group>
+            <group id="server_info" translate="label" type="text" sortOrder="15"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Server Info</label>
+                <comment><![CDATA[Optional fields advertised to MCP clients via
+                <code>initialize.serverInfo</code> (and <code>initialize.instructions</code>).
+                Lets clients like Claude Desktop, MCP Inspector, or ChatGPT show a richer,
+                more recognizable identity for this store. All fields are optional.]]></comment>
+                <field id="title" translate="label comment" type="text" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Display Title</label>
+                    <comment><![CDATA[Human-friendly display name shown in MCP clients
+                    (<code>serverInfo.title</code>). Use this for a marketing-friendly name —
+                    e.g. <em>Acme Storefront</em> — while keeping <strong>Server Name</strong>
+                    short and machine-friendly. Leave blank to fall back to the storefront's
+                    <em>Store Information → Store Name</em>.]]></comment>
+                </field>
+                <field id="description" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Description</label>
+                    <comment><![CDATA[Short one-line description of what this server is
+                    (<code>serverInfo.description</code>) — e.g.
+                    <em>Magento store for Acme Inc.</em>. For "how the AI should use this server"
+                    guidance, use <strong>AI Usage Instructions</strong> below instead.]]></comment>
+                </field>
+                <field id="website_url" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Website URL</label>
+                    <validate>validate-url</validate>
+                    <comment><![CDATA[Optional homepage or info page URL
+                    (<code>serverInfo.websiteUrl</code>). Some MCP clients render this as a link
+                    in their server-picker UI. Leave blank to fall back to the storefront's
+                    base URL.]]></comment>
+                </field>
+                <field id="icon_url" translate="label comment" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Icon URL</label>
+                    <validate>validate-url</validate>
+                    <comment><![CDATA[Public URL of an icon shown by MCP clients in their
+                    server picker (<code>serverInfo.icons[].src</code>). Must be reachable from
+                    the MCP client. Leave blank to omit the icon entirely.]]></comment>
+                </field>
+                <field id="icon_mime_type" translate="label comment" type="select" sortOrder="50"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Icon MIME Type</label>
+                    <source_model>Risecommerce\Mcp\Model\Config\Source\IconMimeType</source_model>
+                    <depends><field id="icon_url">1</field></depends>
+                    <comment><![CDATA[MIME type of the icon at the URL above
+                    (<code>serverInfo.icons[].mimeType</code>). Required when an icon URL is set —
+                    if left blank, the icon entry is dropped from the response.]]></comment>
+                </field>
+                <field id="icon_sizes" translate="label comment" type="text" sortOrder="60"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Icon Sizes</label>
+                    <depends><field id="icon_url">1</field></depends>
+                    <comment><![CDATA[Comma-separated list of pixel sizes the icon ships in —
+                    e.g. <code>48x48,96x96</code>, or <code>any</code> for vector. Becomes
+                    <code>serverInfo.icons[].sizes</code>. Defaults to <code>any</code>.]]></comment>
+                </field>
+                <field id="instructions" translate="label comment" type="textarea" sortOrder="70"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>AI Usage Instructions</label>
+                    <comment><![CDATA[Free-text guidance for the LLM about how to use this server
+                    (<code>initialize.instructions</code>). Describe what this store sells, its
+                    currency/locale, or any operator-specific tips the AI should keep in mind when
+                    selecting tools. Distinct from <strong>Description</strong>, which describes
+                    what the server <em>is</em>.]]></comment>
+                </field>
+            </group>
+            <group id="security" translate="label" type="text" sortOrder="20"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Security</label>
+                <field id="allowed_origins" translate="label comment" type="textarea" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Allowed Origins</label>
+                    <comment><![CDATA[<p>DNS-rebinding defense. One origin per line. Supports exact match or a
+                    trailing <code>*</code> wildcard anchored to a host-component boundary, so
+                    <code>http://localhost*</code> matches <code>http://localhost:3000</code> and
+                    <code>http://localhost/mcp</code> but <strong>not</strong>
+                    <code>http://localhost.attacker.com</code>.</p>
+                    <p>Blank lines and <code>#</code> comments are ignored. Requests without an
+                    <code>Origin</code> header (curl, Claude Desktop, ChatGPT Desktop) always pass this
+                    check — bearer auth is still required. The literal <code>Origin: null</code> is
+                    always rejected.</p>
+                    <p>Defaults cover loopback plus the major AI chat surfaces (Claude, ChatGPT, Gemini,
+                    Copilot, Grok, Perplexity). Remove any your operators don't use, or narrow by port
+                    once a specific inspector/host is chosen.</p>]]></comment>
+                </field>
+            </group>
+            <group id="audit" translate="label" type="text" sortOrder="30"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Audit Log</label>
+                <field id="retention_days" translate="label comment" type="text" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Retention (days)</label>
+                    <validate>validate-zero-or-greater validate-digits</validate>
+                    <comment><![CDATA[Rows older than this are purged by the
+                    <code>risecommerce_mcp_audit_purge</code> cron job. Set to <code>0</code> to disable
+                    automatic purging.]]></comment>
+                </field>
+            </group>
+            <group id="rate_limiting" translate="label" type="text" sortOrder="40"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Rate Limiting</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Rate Limiting</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Caps how many <code>tools/call</code> requests a single
+                    admin user may issue against a single tool per minute. Leave off for
+                    unlimited traffic. Counters are keyed per
+                    <em>(admin user, tool)</em> — multiple bearer tokens owned by the same admin
+                    share a budget.]]></comment>
+                </field>
+                <field id="requests_per_minute" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Requests Per Minute</label>
+                    <validate>validate-greater-than-zero validate-digits</validate>
+                    <depends><field id="enabled">1</field></depends>
+                    <comment><![CDATA[Maximum calls per admin per tool per minute. Fixed-window
+                    counter — a short burst at a minute boundary may briefly allow up to 2×
+                    the configured value. Requests over the limit return JSON-RPC error
+                    <code>-32013 Rate limited</code> with <code>data.limit</code> and
+                    <code>data.retry_after_seconds</code> fields. Flush in-flight counters with
+                    <code>bin/magento cache:clean RISECOMMERCE_MCP_RATE_LIMIT</code>.]]></comment>
+                </field>
+            </group>
+            <group id="oauth" translate="label" type="text" sortOrder="50"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>OAuth 2.1</label>
+                <field id="access_token_lifetime" translate="label comment" type="text" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Access Token Lifetime (seconds)</label>
+                    <validate>validate-greater-than-zero validate-digits</validate>
+                    <comment>How long an OAuth-issued bearer token stays valid. Default 3600 (1 hour).</comment>
+                </field>
+                <field id="refresh_token_lifetime_days" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Refresh Token Lifetime (days)</label>
+                    <validate>validate-greater-than-zero validate-digits</validate>
+                    <comment>How long a refresh token stays valid before the user must re-authorize. Default 30.</comment>
+                </field>
+                <field id="auth_code_lifetime" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Authorization Code Lifetime (seconds)</label>
+                    <validate>validate-greater-than-zero validate-digits</validate>
+                    <comment>How long an authorization code stays valid before exchange. Default 60. Increase only for debugging.</comment>
+                </field>
+                <field id="reauth_behavior" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Re-authorization Behavior</label>
+                    <source_model>Risecommerce\Mcp\Model\Config\Source\ReauthBehavior</source_model>
+                    <comment><![CDATA[<p>What to do when the same (OAuth client, admin user) pair completes
+                    a new consent while a previously issued token is still live.</p>
+                    <ul>
+                        <li><strong>Allow multiple</strong> (default) — keep prior tokens and issue a new one
+                        alongside. Recommended for shared organization connectors</li>
+                        <li><strong>Rotate</strong> — revoke every active token for the pair, then issue a
+                        fresh one. Cleanest audit trail; breaks the multi-seat case.</li>
+                        <li><strong>Reject</strong> — fail the token exchange with <code>invalid_grant</code>.
+                        Operator must revoke the existing token before a new one can be issued.</li>
+                    </ul>]]></comment>
+                </field>
+            </group>
+            <group id="log_tools" translate="label" type="text" sortOrder="55"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Log Tools</label>
+                <field id="allowed_files" translate="label comment" type="textarea" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Readable Log Files</label>
+                    <comment><![CDATA[<p><strong>The <code>system.log.*</code> tools can read these
+                    files and no others</strong>, and will not list a file that is not here. One bare
+                    file name per line — no directory part. Blank lines and lines starting with
+                    <code>#</code> are ignored. A rotated copy is covered by its base name, so
+                    <code>system.log</code> also permits <code>system.log.1</code>.</p>
+                    <p><strong>Empty means no log is readable at all.</strong> The shipped default
+                    lists Magento's own logs. A third-party module that writes its own log file stays
+                    unreadable until you add it here, because only you know which of those record
+                    payment data, API tokens or credentials.</p>
+                    <p>Note that this list controls <em>which files</em> are readable, not what is in
+                    them: any module using Magento's default logger writes into
+                    <code>system.log</code> and <code>debug.log</code>, so those two can still carry
+                    third-party data. Remove them if that matters more than the diagnostics.</p>]]></comment>
+                </field>
+            </group>
+            <group id="config_write" translate="label comment" type="text" sortOrder="57"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>MCP Configuration Writer</label>
+                <comment><![CDATA[<p>Settings for the <code>system.config.set</code> tool — writing
+                store configuration over MCP. It is off by default, gated by its own ACL resource
+                (<em>Tool: Set System Configuration Value</em>), and additionally needs
+                <em>Allow Write Tools</em> above plus the calling token's own write flag.</p>]]></comment>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Configuration Writing</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[<strong>Default: No.</strong> Even when on, the tool refuses
+                    every write until you list the paths it may set below.]]></comment>
+                </field>
+                <field id="allowed_paths" translate="label comment" type="textarea" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Allowed Paths</label>
+                    <backend_model>Risecommerce\Mcp\Model\Config\Backend\AllowedPaths</backend_model>
+                    <depends><field id="enabled">1</field></depends>
+                    <comment><![CDATA[<p><strong>The tool can write these config paths and no
+                    others.</strong> One full path per line, e.g.
+                    <code>tax/calculation/based_on</code>. No wildcards. Blank lines and lines
+                    starting with <code>#</code> are ignored.</p>
+                    <p><strong>Empty means every write is refused.</strong> That is the shipped
+                    default: enabling the tool and deciding what it may change are two separate
+                    decisions.</p>
+                    <p>Some paths can never be written over MCP whatever you list here —
+                    <code>admin/*</code>, <code>payment/*</code> (including the PayPal
+                    <code>payment_&lt;country&gt;</code> sections), <code>web/secure/*</code>,
+                    <code>web/unsecure/*</code>, <code>system/*</code>, <code>dev/*</code>,
+                    <code>oauth/*</code> and <code>risecommerce_mcp/*</code>. Password, encrypted and
+                    obscured fields are refused too, as are paths with no field in
+                    <code>system.xml</code> — which excludes the whole <code>design/*</code> family,
+                    since those live in Content &gt; Design &gt; Configuration.</p>]]></comment>
+                </field>
+            </group>
+            <group id="module_updates" translate="label" type="text" sortOrder="60"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Module Update Notifications</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Check for MCP Module Updates</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[When enabled, a daily cron job
+                    (<code>risecommerce_mcp_check_module_updates</code>) asks
+                    <code>repo.packagist.org</code> whether newer stable releases of your installed
+                    Risecommerce MCP modules exist and shows an admin banner when one is available. Only
+                    public package names are looked up — no store data is sent. Flush cached results
+                    with <code>bin/magento cache:clean RISECOMMERCE_MCP_MODULE_UPDATES</code>.]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

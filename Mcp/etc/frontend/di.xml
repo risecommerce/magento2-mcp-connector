@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!--
+        Run before the URL-rewrite router (sortOrder=20) so the spec-mandated
+        OAuth discovery paths cannot be shadowed by an admin-created URL rewrite.
+    -->
+    <type name="Magento\Framework\App\RouterList">
+        <arguments>
+            <argument name="routerList" xsi:type="array">
+                <item name="risecommerce_mcp_well_known" xsi:type="array">
+                    <item name="class" xsi:type="string">Risecommerce\Mcp\Controller\Router\WellKnownRouter</item>
+                    <item name="disable" xsi:type="boolean">false</item>
+                    <item name="sortOrder" xsi:type="string">10</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <!--
+        Keep the OAuth discovery paths reachable at the authority root on stores
+        whose base URL carries a path (store code): exempt them from the
+        redirect-to-base check that RequestPreprocessor runs before routing.
+    -->
+    <type name="Magento\Store\Model\BaseUrlChecker">
+        <plugin name="risecommerce_mcp_well_known_redirect_exemption"
+                type="Risecommerce\Mcp\Plugin\Store\WellKnownRedirectExemption"/>
+    </type>
+</config>

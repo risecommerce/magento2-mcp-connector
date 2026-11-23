@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <preference for="Risecommerce\McpCmsTools\Api\EntityFinderInterface"
+                type="Risecommerce\McpCmsTools\Model\EntityFinder"/>
+
+    <type name="Risecommerce\Mcp\Model\Tool\ToolRegistry">
+        <arguments>
+            <argument name="tools" xsi:type="array">
+                <!-- Read tools -->
+                <item name="cms.page.list" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Page\PageList
+                </item>
+                <item name="cms.page.get" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Page\PageGet
+                </item>
+                <item name="cms.block.list" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Block\BlockList
+                </item>
+                <item name="cms.block.get" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Block\BlockGet
+                </item>
+
+                <!-- Write tools -->
+                <item name="cms.page.create" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Page\PageCreate
+                </item>
+                <item name="cms.page.update" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Page\PageUpdate
+                </item>
+                <item name="cms.page.delete" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Page\PageDelete
+                </item>
+                <item name="cms.block.create" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Block\BlockCreate
+                </item>
+                <item name="cms.block.update" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Block\BlockUpdate
+                </item>
+                <item name="cms.block.delete" xsi:type="object">
+                    Risecommerce\McpCmsTools\Tool\Cms\Block\BlockDelete
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Page field resolvers (full set for `cms.page.get`). -->
+    <type name="Risecommerce\McpCmsTools\Tool\Cms\Page\PageGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\StateResolver
+                </item>
+                <item name="content" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\ContentResolver
+                </item>
+                <item name="meta" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\MetaResolver
+                </item>
+                <item name="layout" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\LayoutResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Page field resolvers (leaner default for `cms.page.list`). -->
+    <type name="Risecommerce\McpCmsTools\Tool\Cms\Page\PageList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\StateResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Page\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Block field resolvers (full set for `cms.block.get`). -->
+    <type name="Risecommerce\McpCmsTools\Tool\Cms\Block\BlockGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\StateResolver
+                </item>
+                <item name="content" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\ContentResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Block field resolvers (leaner default for `cms.block.list`). -->
+    <type name="Risecommerce\McpCmsTools\Tool\Cms\Block\BlockList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\StateResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\McpCmsTools\Model\FieldResolver\Block\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

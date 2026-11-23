@@ -1,0 +1,293 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Test\Unit\Model\Auth;
+
+use Risecommerce\Mcp\Api\LoggerInterface;
+use Risecommerce\Mcp\Exception\UnauthorizedException;
+use Risecommerce\Mcp\Model\Auth\AdminUserLookup;
+use Risecommerce\Mcp\Model\Auth\TokenAuthenticator;
+use Risecommerce\Mcp\Model\Auth\TokenHasher;
+use Risecommerce\Mcp\Model\OAuth\Client;
+use Risecommerce\Mcp\Model\OAuth\ClientRepository;
+use Risecommerce\Mcp\Model\Token;
+use Risecommerce\Mcp\Model\TokenRepository;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\User\Model\User;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
+
+class TokenAuthenticatorTest extends TestCase
+{
+    /**
+     * @phpstan-var TokenHasher&MockObject
+     */
+    // phpcs:ignore Magento2.Commenting.ClassPropertyPHPDocFormatting
+    private TokenHasher&MockObject $tokenHasher;
+
+    /**
+     * @phpstan-var TokenRepository&MockObject
+     */
+    // phpcs:ignore Magento2.Commenting.ClassPropertyPHPDocFormatting
+    private TokenRepository&MockObject $tokenRepository;
+
+    /**
+     * @phpstan-var AdminUserLookup&MockObject
+     */
+    // phpcs:ignore Magento2.Commenting.ClassPropertyPHPDocFormatting
+    private AdminUserLookup&MockObject $adminUserLookup;
+
+    /**
+     * @phpstan-var ClientRepository&MockObject
+     */
+    // phpcs:ignore Magento2.Commenting.ClassPropertyPHPDocFormatting
+    private ClientRepository&MockObject $clientRepository;
+
+    /**
+     * @phpstan-var LoggerInterface&MockObject
+     */
+    // phpcs:ignore Magento2.Commenting.ClassPropertyPHPDocFormatting
+    private LoggerInterface&MockObject $logger;
+
+    private TokenAuthenticator $authenticator;
+
+    protected function setUp(): void
+    {
+        $this->tokenHasher = $this->createMock(TokenHasher::class);
+        $this->tokenRepository = $this->createMock(TokenRepository::class);
+        $this->adminUserLookup = $this->createMock(AdminUserLookup::class);
+        $this->clientRepository = $this->createMock(ClientRepository::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->authenticator = new TokenAuthenticator(
+            $this->tokenHasher,
+            $this->tokenRepository,
+            $this->adminUserLookup,
+            $this->clientRepository,
+            $this->logger
+        );
+    }
+
+    /**
+     * @return iterable<string, array{0: ?string}>
+     */
+    public static function malformedHeaderProvider(): iterable
+    {
+        yield 'null header' => [null];
+        yield 'empty string' => [''];
+        yield 'not a bearer scheme' => ['Basic YWRtaW46c2VjcmV0'];
+        yield 'bearer without token' => ['Bearer '];
+        yield 'bearer with only whitespace' => ['Bearer    '];
+    }
+
+    /**
+     * @dataProvider malformedHeaderProvider
+     */
+    public function testRejectsMalformedHeader(?string $header): void
+    {
+        $this->expectException(UnauthorizedException::class);
+        $this->expectExceptionMessageMatches('/Invalid bearer token/');
+
+        $this->authenticator->authenticate($header);
+    }
+
+    public function testRejectsUnknownHash(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('hash-of-plaintext');
+        $this->tokenRepository->method('getByHash')
+            ->willThrowException(NoSuchEntityException::singleField('bearer', '<redacted>'));
+
+        $this->expectException(UnauthorizedException::class);
+        $this->expectExceptionMessageMatches('/Invalid bearer token/');
+
+        $this->authenticator->authenticate('Bearer deadbeef');
+    }
+
+    public function testRejectsRevokedToken(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(true);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $this->expectException(UnauthorizedException::class);
+        $this->expectExceptionMessageMatches('/Invalid bearer token/');
+
+        $this->authenticator->authenticate('Bearer abc');
+    }
+
+    public function testRejectsExpiredToken(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(true);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $this->expectException(UnauthorizedException::class);
+        $this->expectExceptionMessageMatches('/Invalid bearer token/');
+
+        $this->authenticator->authenticate('Bearer abc');
+    }
+
+    public function testRejectsInactiveAdmin(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $token->method('getId')->willReturn(7);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $user = $this->createMock(User::class);
+        $user->method('getIsActive')->willReturn(0);
+        $this->adminUserLookup->method('getById')->willReturn($user);
+
+        $this->expectException(UnauthorizedException::class);
+        $this->expectExceptionMessageMatches('/Invalid bearer token/');
+
+        $this->authenticator->authenticate('Bearer abc');
+    }
+
+    public function testRejectsDeletedAdmin(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $this->adminUserLookup->method('getById')
+            ->willThrowException(NoSuchEntityException::singleField('user_id', 42));
+
+        $this->expectException(UnauthorizedException::class);
+
+        $this->authenticator->authenticate('Bearer abc');
+    }
+
+    public function testHappyPathReturnsContextAndTouchesLastUsed(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $token->method('getId')->willReturn(7);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $user = $this->createMock(User::class);
+        $user->method('getIsActive')->willReturn(1);
+        $this->adminUserLookup->method('getById')->willReturn($user);
+
+        $this->tokenRepository->expects($this->once())
+            ->method('touchLastUsed')
+            ->with(7);
+
+        $ctx = $this->authenticator->authenticate('Bearer abc');
+
+        $this->assertSame($token, $ctx->token);
+        $this->assertSame($user, $ctx->adminUser);
+    }
+
+    public function testRejectsTokenIssuedByDisabledOAuthClient(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $token->method('getId')->willReturn(7);
+        $token->method('getOAuthClientId')->willReturn(56);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $user = $this->createMock(User::class);
+        $user->method('getIsActive')->willReturn(1);
+        $this->adminUserLookup->method('getById')->willReturn($user);
+
+        $client = $this->createMock(Client::class);
+        $client->method('isDisabled')->willReturn(true);
+        $this->clientRepository->expects($this->once())
+            ->method('getById')
+            ->with(56)
+            ->willReturn($client);
+        $this->tokenRepository->expects($this->never())->method('touchLastUsed');
+
+        $this->expectException(UnauthorizedException::class);
+        $this->authenticator->authenticate('Bearer abc');
+    }
+
+    public function testRejectsTokenWhenIssuingClientDeleted(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $token->method('getOAuthClientId')->willReturn(56);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $user = $this->createMock(User::class);
+        $user->method('getIsActive')->willReturn(1);
+        $this->adminUserLookup->method('getById')->willReturn($user);
+
+        $this->clientRepository->method('getById')
+            ->willThrowException(NoSuchEntityException::singleField('id', 56));
+        $this->tokenRepository->expects($this->never())->method('touchLastUsed');
+
+        $this->expectException(UnauthorizedException::class);
+        $this->authenticator->authenticate('Bearer abc');
+    }
+
+    public function testCliMintedTokenWithNullClientSkipsClientLookup(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $token->method('getId')->willReturn(7);
+        $token->method('getOAuthClientId')->willReturn(null);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $user = $this->createMock(User::class);
+        $user->method('getIsActive')->willReturn(1);
+        $this->adminUserLookup->method('getById')->willReturn($user);
+
+        // CLI-minted bearer tokens carry no OAuth linkage — must never query the client repo.
+        $this->clientRepository->expects($this->never())->method('getById');
+
+        $ctx = $this->authenticator->authenticate('Bearer abc');
+        $this->assertSame($token, $ctx->token);
+    }
+
+    public function testTouchLastUsedFailureDoesNotFailAuth(): void
+    {
+        $this->tokenHasher->method('hash')->willReturn('h');
+        $token = $this->createMock(Token::class);
+        $token->method('isRevoked')->willReturn(false);
+        $token->method('isExpired')->willReturn(false);
+        $token->method('getAdminUserId')->willReturn(42);
+        $token->method('getId')->willReturn(7);
+        $this->tokenRepository->method('getByHash')->willReturn($token);
+
+        $user = $this->createMock(User::class);
+        $user->method('getIsActive')->willReturn(1);
+        $this->adminUserLookup->method('getById')->willReturn($user);
+
+        $this->tokenRepository->method('touchLastUsed')
+            ->willThrowException(new RuntimeException('DB write down'));
+        $this->logger->expects($this->once())->method('warning');
+
+        $ctx = $this->authenticator->authenticate('Bearer abc');
+
+        $this->assertSame($token, $ctx->token);
+    }
+}

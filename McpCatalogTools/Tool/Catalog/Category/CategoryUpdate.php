@@ -1,0 +1,335 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\McpCatalogTools\Tool\Catalog\Category;
+
+use Risecommerce\Mcp\Api\ToolInterface;
+use Risecommerce\Mcp\Api\ToolResultInterface;
+use Risecommerce\Mcp\Api\UnderlyingAclAwareInterface;
+use Risecommerce\Mcp\Model\Tool\Schema\Builder\BooleanBuilder;
+use Risecommerce\Mcp\Model\Tool\Schema\Builder\IntegerBuilder;
+use Risecommerce\Mcp\Model\Tool\Schema\Builder\StringBuilder;
+use Risecommerce\Mcp\Model\Tool\Schema\Schema;
+use Risecommerce\Mcp\Model\Tool\ToolResult;
+use Risecommerce\Mcp\Model\Tool\WriteMode;
+use Risecommerce\McpCatalogTools\Model\Category\PreserveInheritedValues;
+use Risecommerce\McpCatalogTools\Model\EntityFinder;
+use Risecommerce\McpCatalogTools\Model\StoreScope;
+use Magento\Catalog\Api\CategoryManagementInterface;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Model\Store;
+use Magento\Store\Model\StoreManagerInterface;
+
+/**
+ * MCP write tool `catalog.category.update` (PATCH-style). Tree moves route
+ * through {@see CategoryManagementInterface::move} because save() alone leaves
+ * `path`/`level`/child counts stale on a `parent_id` change.
+ */
+class CategoryUpdate implements ToolInterface, UnderlyingAclAwareInterface
+{
+    public const TOOL_NAME = 'catalog.category.update';
+    public const ACL_RESOURCE = 'Risecommerce_McpCatalogTools::tool_catalog_category_update';
+
+    /**
+     * @param EntityFinder $entityFinder
+     * @param CategoryRepositoryInterface $categoryRepository
+     * @param CategoryManagementInterface $categoryManagement
+     * @param CategoryFieldApplier $fieldApplier
+     * @param StoreScope $storeScope
+     * @param PreserveInheritedValues $preserveInheritedValues
+     * @param StoreManagerInterface $storeManager
+     */
+    public function __construct(
+        private readonly EntityFinder $entityFinder,
+        private readonly CategoryRepositoryInterface $categoryRepository,
+        private readonly CategoryManagementInterface $categoryManagement,
+        private readonly CategoryFieldApplier $fieldApplier,
+        private readonly StoreScope $storeScope,
+        private readonly PreserveInheritedValues $preserveInheritedValues,
+        private readonly StoreManagerInterface $storeManager
+    ) {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getName(): string
+    {
+        return self::TOOL_NAME;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTitle(): string
+    {
+        return 'Update Category';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDescription(): string
+    {
+        return 'Partial update of a catalog category. Identify by `id`. Only '
+            . 'fields you provide are touched. Changing `parent_id` moves '
+            . 'the category in the tree (path / level rebuild) — use '
+            . '`after_id` to control sibling ordering at the destination. '
+            . 'Saves at global/default scope unless `store_id` targets a '
+            . 'specific store view.';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getInputSchema(): array
+    {
+        return Schema::object()
+            ->integer('id', fn (IntegerBuilder $i) => $i->minimum(1)->required())
+            ->integer('store_id', fn (IntegerBuilder $i) => $i
+                ->minimum(0)
+                ->description('Store view id for an intentional store-view '
+                    . 'override. Omit (or pass 0) to save at global/default '
+                    . 'scope — the value then applies to every store view '
+                    . 'without creating overrides.'))
+            ->string('name', fn (StringBuilder $s) => $s->minLength(1))
+            ->integer('parent_id', fn (IntegerBuilder $i) => $i
+                ->minimum(1)
+                ->description('Move target. Triggers a tree rebuild via '
+                    . 'CategoryManagement::move().'))
+            ->integer('after_id', fn (IntegerBuilder $i) => $i
+                ->minimum(1)
+                ->description('Optional sibling at the destination — the '
+                    . 'moved category is placed immediately after it. '
+                    . 'Only honoured when `parent_id` is also provided.'))
+            ->boolean('is_active', fn (BooleanBuilder $b) => $b)
+            ->boolean('include_in_menu', fn (BooleanBuilder $b) => $b)
+            ->integer('position', fn (IntegerBuilder $i) => $i->minimum(0))
+            ->string('url_key', fn (StringBuilder $s) => $s)
+            ->string('description', fn (StringBuilder $s) => $s)
+            ->string('image', fn (StringBuilder $s) => $s)
+            ->string('display_mode', fn (StringBuilder $s) => $s)
+            ->string('page_layout', fn (StringBuilder $s) => $s)
+            ->string('meta_title', fn (StringBuilder $s) => $s)
+            ->string('meta_keywords', fn (StringBuilder $s) => $s)
+            ->string('meta_description', fn (StringBuilder $s) => $s)
+            ->boolean('is_anchor', fn (BooleanBuilder $b) => $b)
+            ->rawProperty('custom_attributes', [
+                'type' => 'object',
+                'description' => 'Map of attribute_code => value.',
+                'additionalProperties' => true,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAclResource(): string
+    {
+        return self::ACL_RESOURCE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getUnderlyingAclResource(): ?string
+    {
+        return 'Magento_Catalog::categories';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getWriteMode(): WriteMode
+    {
+        return WriteMode::WRITE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getConfirmationRequired(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function execute(array $arguments): ToolResultInterface
+    {
+        $storeId = $this->entityFinder->storeIdFrom($arguments, Store::DEFAULT_STORE_ID);
+        if ($storeId !== Store::DEFAULT_STORE_ID) {
+            $this->assertStoreCoversTree($arguments, $storeId);
+        }
+
+        // `CategoryRepository::save()` derives the write scope from the store
+        // manager's current store — not from the model — so the whole mutation
+        // has to run inside the resolved scope. Without this, `/mcp`'s frontend
+        // store view would receive store-view override rows.
+        return $this->storeScope->run(
+            $storeId,
+            fn (): ToolResultInterface => $this->applyUpdate($arguments, $storeId)
+        );
+    }
+
+    /**
+     * Apply the patch and save. Runs inside the resolved store scope.
+     *
+     * @param array $arguments
+     * @phpstan-param array<string, mixed> $arguments
+     * @param int $storeId
+     * @return ToolResultInterface
+     * @throws LocalizedException
+     */
+    private function applyUpdate(array $arguments, int $storeId): ToolResultInterface
+    {
+        $patch = $arguments;
+        unset($patch['id'], $patch['store_id']);
+
+        // Tree moves must go through CategoryManagement::move() — setParentId
+        // + save() would leave path / level / children counts stale.
+        $newParentId = null;
+        if (array_key_exists('parent_id', $patch) && is_numeric($patch['parent_id'])) {
+            $newParentId = (int) $patch['parent_id'];
+        }
+        $afterId = null;
+        if (array_key_exists('after_id', $patch) && is_numeric($patch['after_id'])) {
+            $afterId = (int) $patch['after_id'];
+        }
+        unset($patch['parent_id'], $patch['after_id']);
+
+        $moved = $newParentId !== null && $this->move($arguments, $newParentId, $afterId);
+
+        // Load at the write scope only now. `CategoryRepository` caches one
+        // instance per store id and `save()` re-gets that cached instance, so a
+        // load taken before the move would hand `save()` pre-move
+        // path/level/position/parent_id — all static columns, written back
+        // unconditionally — silently reverting the move.
+        $category = $this->entityFinder->categoryFrom($arguments, $storeId);
+
+        $this->fieldApplier->applyOptional($category, $patch);
+        $this->preserveInheritedValues->apply($category, $patch);
+
+        $saved = $this->categoryRepository->save($category);
+
+        $payload = [
+            'entity_id' => (int) $saved->getId(),
+            'name' => (string) $saved->getName(),
+            'parent_id' => $saved->getParentId() !== null ? (int) $saved->getParentId() : null,
+            'level' => $saved->getLevel() !== null ? (int) $saved->getLevel() : null,
+            'is_active' => $saved->getIsActive() !== null ? (bool) $saved->getIsActive() : null,
+        ];
+
+        $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            throw new LocalizedException(__('Failed to encode updated category as JSON.'));
+        }
+
+        $changed = array_keys($patch);
+        if ($moved) {
+            $changed[] = 'parent_id';
+        }
+
+        return new ToolResult(
+            content: [['type' => 'text', 'text' => $json]],
+            auditSummary: [
+                'entity_id' => (int) $saved->getId(),
+                'name' => (string) $saved->getName(),
+                'fields_changed' => $changed,
+            ]
+        );
+    }
+
+    /**
+     * Store groups hang off different root categories, and a store-view override
+     * on a category outside the store's root is invisible there while still
+     * leaving an attribute row and a URL rewrite behind. When the same call moves
+     * the category the destination parent decides the tree, because the move
+     * runs before the save. Unknown stores and categories are left to the
+     * stages that already report them.
+     *
+     * @param array $arguments
+     * @phpstan-param array<string, mixed> $arguments
+     * @param int $storeId
+     * @return void
+     * @throws LocalizedException
+     */
+    private function assertStoreCoversTree(array $arguments, int $storeId): void
+    {
+        $categoryId = is_numeric($arguments['id'] ?? null) ? (int) $arguments['id'] : 0;
+        if ($categoryId <= 0) {
+            return;
+        }
+        $treeOf = is_numeric($arguments['parent_id'] ?? null) ? (int) $arguments['parent_id'] : $categoryId;
+
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            $path = (string) $this->categoryRepository->get($treeOf)->getPath();
+        } catch (NoSuchEntityException) {
+            return;
+        }
+        if (!$store instanceof Store) {
+            throw new LocalizedException(__('Could not resolve the root category of store_id %1.', $storeId));
+        }
+        $rootId = (int) $store->getRootCategoryId();
+
+        if (in_array($rootId, array_map('intval', explode('/', $path)), true)) {
+            return;
+        }
+        throw new LocalizedException($treeOf === $categoryId
+            ? __(
+                'store_id %1 is under root category %2, which does not contain category %3.',
+                $storeId,
+                $rootId,
+                $categoryId
+            )
+            : __(
+                'store_id %1 is under root category %2, which does not contain destination parent %3 of category %4.',
+                $storeId,
+                $rootId,
+                $treeOf,
+                $categoryId
+            ));
+    }
+
+    /**
+     * Move the category when the requested parent differs from the current one.
+     * The parent is read from the *unscoped* instance — the same repository
+     * cache entry `CategoryManagement::move()` loads and mutates — so the
+     * scoped cache entry stays cold until the tree has been rebuilt.
+     *
+     * @param array $arguments
+     * @phpstan-param array<string, mixed> $arguments
+     * @param int $newParentId
+     * @param int|null $afterId
+     * @return bool Whether a move was performed.
+     * @throws LocalizedException
+     */
+    private function move(array $arguments, int $newParentId, ?int $afterId): bool
+    {
+        $unscopedArgs = $arguments;
+        unset($unscopedArgs['store_id']);
+
+        $category = $this->entityFinder->categoryFrom($unscopedArgs);
+        $currentParentId = $category->getParentId() !== null
+            ? (int) $category->getParentId()
+            : null;
+
+        if ($newParentId === $currentParentId) {
+            return false;
+        }
+
+        $this->categoryManagement->move((int) $category->getId(), $newParentId, $afterId);
+
+        return true;
+    }
+}

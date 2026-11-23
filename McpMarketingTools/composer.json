@@ -1,0 +1,19 @@
+{
+    "name": "risecommerce/magento2-mcp-marketing-tools",
+    "description": "Promotion-domain MCP tools for Risecommerce_Mcp (catalog rules, cart price rules, coupons)",
+    "type": "magento2-module",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "magento/framework": "^103.0",
+        "risecommerce/magento2-mcp-module": "^1.1"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Risecommerce\\McpMarketingTools\\": ""
+        }
+    }
+}

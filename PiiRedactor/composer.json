@@ -1,0 +1,22 @@
+{
+    "name": "risecommerce/magento2-pii-redactor",
+    "description": "Bundled PII detection and redaction module for Risecommerce MCP",
+    "type": "magento2-module",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Risecommerce\\PiiRedactor\\": ""
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

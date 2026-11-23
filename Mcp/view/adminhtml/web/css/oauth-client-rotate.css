@@ -1,0 +1,20 @@
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+
+.mcp-rotate-secret-modal {
+    display: none;
+}
+
+.mcp-rotate-secret-modal__revoke {
+    align-items: flex-start;
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.mcp-rotate-secret-modal__revoke input[type="checkbox"] {
+    margin-top: 4px;
+}

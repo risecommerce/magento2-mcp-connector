@@ -1,0 +1,19 @@
+{
+    "name": "risecommerce/magento2-mcp-customer-tools",
+    "description": "Customer-domain MCP tools for Risecommerce_Mcp (read + write over customers, addresses, groups, account management)",
+    "type": "magento2-module",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "magento/framework": "^103.0",
+        "risecommerce/magento2-mcp-module": "^1.1"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Risecommerce\\McpCustomerTools\\": ""
+        }
+    }
+}

@@ -1,0 +1,167 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\McpCustomerTools\Tool\Customer\Account;
+
+use Risecommerce\Mcp\Api\ToolInterface;
+use Risecommerce\Mcp\Api\ToolResultInterface;
+use Risecommerce\Mcp\Api\UnderlyingAclAwareInterface;
+use Risecommerce\Mcp\Model\Tool\Schema\Builder\IntegerBuilder;
+use Risecommerce\Mcp\Model\Tool\Schema\Builder\StringBuilder;
+use Risecommerce\Mcp\Model\Tool\Schema\Schema;
+use Risecommerce\Mcp\Model\Tool\ToolResult;
+use Risecommerce\Mcp\Model\Tool\WriteMode;
+use Magento\Customer\Api\AccountManagementInterface;
+use Magento\Customer\Model\AccountManagement;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+
+/**
+ * Initiates the same flow the storefront "Forgot your password?" link uses
+ * — sends a reset email; the actual password change happens when the
+ * customer clicks the link.
+ *
+ * Unknown email returns the same `initiated: true` wire response as a
+ * known email — prevents this tool from doubling as a customer-existence
+ * oracle. The truthful outcome is preserved in `auditSummary` for operator
+ * review.
+ */
+class ResetPassword implements ToolInterface, UnderlyingAclAwareInterface
+{
+    public const TOOL_NAME = 'customer.account.reset_password';
+    public const ACL_RESOURCE = 'Risecommerce_McpCustomerTools::tool_customer_account_reset_password';
+
+    /**
+     * @param AccountManagementInterface $accountManagement
+     */
+    public function __construct(
+        private readonly AccountManagementInterface $accountManagement
+    ) {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getName(): string
+    {
+        return self::TOOL_NAME;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTitle(): string
+    {
+        return 'Initiate Password Reset';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDescription(): string
+    {
+        return 'Send a password-reset email to the customer at `email`. '
+            . '`website_id` scopes the lookup (required when '
+            . '`customer/account_share/scope` is per-website and the same '
+            . 'email lives on multiple sites).';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getInputSchema(): array
+    {
+        return Schema::object()
+            ->string('email', fn (StringBuilder $s) => $s->minLength(1)->format('email')->required())
+            ->integer('website_id', fn (IntegerBuilder $i) => $i
+                ->minimum(0)
+                ->description('Scope for the email lookup. Omit when '
+                    . '`customer/account_share/scope` is global.')
+            )
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAclResource(): string
+    {
+        return self::ACL_RESOURCE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getUnderlyingAclResource(): ?string
+    {
+        return 'Magento_Customer::reset_password';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getWriteMode(): WriteMode
+    {
+        return WriteMode::WRITE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getConfirmationRequired(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function execute(array $arguments): ToolResultInterface
+    {
+        $email = isset($arguments['email']) && is_string($arguments['email'])
+            ? $arguments['email']
+            : '';
+        $websiteId = isset($arguments['website_id']) && is_numeric($arguments['website_id'])
+            ? (int) $arguments['website_id']
+            : null;
+
+        try {
+            $initiated = (bool) $this->accountManagement->initiatePasswordReset(
+                $email,
+                AccountManagement::EMAIL_RESET,
+                $websiteId
+            );
+            $found = true;
+        } catch (NoSuchEntityException) {
+            $initiated = false;
+            $found = false;
+        }
+
+        // Wire response is always the success shape — see class docblock.
+        $payload = [
+            'initiated' => true,
+            'email' => $email,
+            'website_id' => $websiteId,
+        ];
+
+        $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            throw new LocalizedException(__('Failed to encode reset-password result as JSON.'));
+        }
+
+        return new ToolResult(
+            content: [['type' => 'text', 'text' => $json]],
+            auditSummary: [
+                'email' => $email,
+                'website_id' => $websiteId,
+                'initiated' => $initiated,
+                'customer_found' => $found,
+            ]
+        );
+    }
+}

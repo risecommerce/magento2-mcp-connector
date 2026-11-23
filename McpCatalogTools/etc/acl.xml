@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Magento_Backend::system">
+                    <resource id="Risecommerce_Mcp::mcp">
+                        <resource id="Risecommerce_Mcp::tools">
+
+                            <!-- Read tools -->
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_list"
+                                      title="Tool: List Products" sortOrder="100"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_get"
+                                      title="Tool: Get Product" sortOrder="101"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_list"
+                                      title="Tool: List Categories" sortOrder="110"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_get"
+                                      title="Tool: Get Category" sortOrder="111"/>
+
+                            <!-- Write tools -->
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_create"
+                                      title="Tool: Create Product" sortOrder="200"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_update"
+                                      title="Tool: Update Product" sortOrder="201"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_delete"
+                                      title="Tool: Delete Product" sortOrder="202"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_create"
+                                      title="Tool: Create Category" sortOrder="210"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_update"
+                                      title="Tool: Update Category" sortOrder="211"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_delete"
+                                      title="Tool: Delete Category" sortOrder="212"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_stock_set"
+                                      title="Tool: Set Product Stock" sortOrder="220"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_media_add"
+                                      title="Tool: Add Product Image" sortOrder="230"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_media_update"
+                                      title="Tool: Update Product Image" sortOrder="231"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_media_remove"
+                                      title="Tool: Remove Product Image" sortOrder="232"/>
+
+                        </resource>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

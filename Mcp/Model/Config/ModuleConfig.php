@@ -1,0 +1,307 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Model\Config;
+
+use Risecommerce\Mcp\Model\Config\Source\ReauthBehavior;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+
+/**
+ * Reader for every `risecommerce_mcp/*` store-config value.
+ */
+class ModuleConfig
+{
+    public const XML_PATH_ENABLED = 'risecommerce_mcp/general/enabled';
+    public const XML_PATH_SERVER_NAME = 'risecommerce_mcp/general/server_name';
+    public const XML_PATH_ALLOW_WRITES = 'risecommerce_mcp/general/allow_writes';
+    public const XML_PATH_MAX_BODY_KB = 'risecommerce_mcp/general/max_body_kb';
+    public const XML_PATH_SERVER_TITLE = 'risecommerce_mcp/server_info/title';
+    public const XML_PATH_SERVER_DESCRIPTION = 'risecommerce_mcp/server_info/description';
+    public const XML_PATH_SERVER_WEBSITE_URL = 'risecommerce_mcp/server_info/website_url';
+    public const XML_PATH_SERVER_ICON_URL = 'risecommerce_mcp/server_info/icon_url';
+    public const XML_PATH_SERVER_ICON_MIME_TYPE = 'risecommerce_mcp/server_info/icon_mime_type';
+    public const XML_PATH_SERVER_ICON_SIZES = 'risecommerce_mcp/server_info/icon_sizes';
+    public const XML_PATH_SERVER_INSTRUCTIONS = 'risecommerce_mcp/server_info/instructions';
+    public const XML_PATH_ALLOWED_ORIGINS = 'risecommerce_mcp/security/allowed_origins';
+    public const XML_PATH_AUDIT_RETENTION_DAYS = 'risecommerce_mcp/audit/retention_days';
+    public const XML_PATH_RATE_LIMITING_ENABLED = 'risecommerce_mcp/rate_limiting/enabled';
+    public const XML_PATH_RATE_LIMITING_RPM = 'risecommerce_mcp/rate_limiting/requests_per_minute';
+    public const XML_PATH_OAUTH_AUTH_CODE_LIFETIME = 'risecommerce_mcp/oauth/auth_code_lifetime';
+    public const XML_PATH_OAUTH_ACCESS_TOKEN_LIFETIME = 'risecommerce_mcp/oauth/access_token_lifetime';
+    public const XML_PATH_OAUTH_REFRESH_TOKEN_LIFETIME_DAYS = 'risecommerce_mcp/oauth/refresh_token_lifetime_days';
+    public const XML_PATH_OAUTH_REAUTH_BEHAVIOR = 'risecommerce_mcp/oauth/reauth_behavior';
+    public const XML_PATH_MODULE_UPDATES_ENABLED = 'risecommerce_mcp/module_updates/enabled';
+    public const XML_PATH_LOG_ALLOWED_FILES = 'risecommerce_mcp/log_tools/allowed_files';
+
+    public const DEFAULT_SERVER_NAME = 'Magento MCP';
+    public const DEFAULT_MAX_BODY_KB = 256;
+    public const MIN_MAX_BODY_KB = 64;
+    public const MAX_MAX_BODY_KB = 32768;
+    public const DEFAULT_RATE_LIMITING_RPM = 60;
+    public const DEFAULT_OAUTH_AUTH_CODE_LIFETIME = 60;
+    public const DEFAULT_OAUTH_ACCESS_TOKEN_LIFETIME = 3600;
+    public const DEFAULT_OAUTH_REFRESH_TOKEN_LIFETIME_DAYS = 30;
+
+    /**
+     * @param ScopeConfigInterface $scopeConfig
+     */
+    public function __construct(
+        private readonly ScopeConfigInterface $scopeConfig
+    ) {
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_ENABLED);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAllowWrites(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_ALLOW_WRITES);
+    }
+
+    /**
+     * Maximum accepted `POST /mcp` body, in bytes. Raised above the 256 KiB
+     * default only when a store uploads media through MCP; the web server's own
+     * body limit still applies and is the real pre-auth guard.
+     *
+     * @return int
+     */
+    public function getMaxBodyBytes(): int
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_MAX_BODY_KB);
+        $kilobytes = is_scalar($value) ? (int) $value : self::DEFAULT_MAX_BODY_KB;
+
+        return min(max($kilobytes, self::MIN_MAX_BODY_KB), self::MAX_MAX_BODY_KB) * 1024;
+    }
+
+    /**
+     * Server name advertised via `initialize.serverInfo.name`.
+     * @return string
+     */
+    public function getServerName(): string
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_SERVER_NAME);
+        $value = is_string($value) ? trim($value) : '';
+        return $value !== '' ? $value : self::DEFAULT_SERVER_NAME;
+    }
+
+    /**
+     * @return ?string Falls back to Store Information → Store Name.
+     */
+    public function getServerTitle(): ?string
+    {
+        return $this->readNonEmptyString(self::XML_PATH_SERVER_TITLE)
+            ?? $this->readNonEmptyString('general/store_information/name');
+    }
+
+    /**
+     * Short description advertised via `initialize.serverInfo.description`.
+     * @return ?string
+     */
+    public function getServerDescription(): ?string
+    {
+        return $this->readNonEmptyString(self::XML_PATH_SERVER_DESCRIPTION);
+    }
+
+    /**
+     * @return ?string Falls back to the store's secure base URL.
+     */
+    public function getServerWebsiteUrl(): ?string
+    {
+        $value = $this->readNonEmptyString(self::XML_PATH_SERVER_WEBSITE_URL);
+        if ($value !== null) {
+            return $value;
+        }
+        $baseUrl = $this->readNonEmptyString('web/secure/base_url')
+            ?? $this->readNonEmptyString('web/unsecure/base_url');
+        return $baseUrl !== null ? rtrim($baseUrl, '/') : null;
+    }
+
+    /**
+     * Free-text guidance advertised via top-level `initialize.instructions`.
+     * @return ?string
+     */
+    public function getServerInstructions(): ?string
+    {
+        return $this->readNonEmptyString(self::XML_PATH_SERVER_INSTRUCTIONS);
+    }
+
+    /**
+     * Returns null unless both URL and MIME type are configured — a URL without a
+     * declared MIME type is dropped rather than guessed.
+     *
+     * @return ?array{src: string, mimeType: string, sizes: list<string>}
+     */
+    public function getServerIcon(): ?array
+    {
+        $src = $this->readNonEmptyString(self::XML_PATH_SERVER_ICON_URL);
+        $mimeType = $this->readNonEmptyString(self::XML_PATH_SERVER_ICON_MIME_TYPE);
+        if ($src === null || $mimeType === null) {
+            return null;
+        }
+
+        $rawSizes = $this->readNonEmptyString(self::XML_PATH_SERVER_ICON_SIZES) ?? 'any';
+        $sizes = [];
+        foreach (explode(',', $rawSizes) as $size) {
+            $size = trim($size);
+            if ($size !== '') {
+                $sizes[] = $size;
+            }
+        }
+        if ($sizes === []) {
+            $sizes = ['any'];
+        }
+
+        return ['src' => $src, 'mimeType' => $mimeType, 'sizes' => $sizes];
+    }
+
+    /**
+     * @param string $path
+     * @return ?string
+     */
+    private function readNonEmptyString(string $path): ?string
+    {
+        $value = $this->scopeConfig->getValue($path);
+        $value = is_string($value) ? trim($value) : '';
+        return $value !== '' ? $value : null;
+    }
+
+    /**
+     * One origin per line; `#` comments and blank lines stripped. Wildcards are
+     * handled by OriginValidator.
+     *
+     * @return string[]
+     */
+    public function getAllowedOrigins(): array
+    {
+        $raw = $this->scopeConfig->getValue(self::XML_PATH_ALLOWED_ORIGINS);
+        if (!is_string($raw) || $raw === '') {
+            return [];
+        }
+
+        $origins = [];
+        foreach (preg_split('/\r\n|\r|\n/', $raw) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
+            }
+            $origins[] = $line;
+        }
+        return $origins;
+    }
+
+    /**
+     * Log file names the `system.log.*` tools may read; empty means none.
+     *
+     * @return list<string>
+     */
+    public function getAllowedLogFiles(): array
+    {
+        $raw = $this->scopeConfig->getValue(self::XML_PATH_LOG_ALLOWED_FILES);
+        if (!is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+
+        $files = [];
+        foreach (preg_split('/\r\n|\r|\n/', $raw) ?: [] as $line) {
+            $line = trim($line, " \t`\"'");
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
+            }
+            $files[] = $line;
+        }
+
+        return array_values(array_unique($files));
+    }
+
+    /**
+     * @return int
+     */
+    public function getAuditRetentionDays(): int
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_AUDIT_RETENTION_DAYS);
+        return is_scalar($value) ? max(0, (int) $value) : 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRateLimitingEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_RATE_LIMITING_ENABLED);
+    }
+
+    /**
+     * Max `tools/call` invocations per (admin-user, tool) per minute. `<= 0` = unlimited.
+     * @return int
+     */
+    public function getRateLimitRequestsPerMinute(): int
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_RATE_LIMITING_RPM);
+        if (!is_scalar($value)) {
+            return self::DEFAULT_RATE_LIMITING_RPM;
+        }
+        return max(0, (int) $value);
+    }
+
+    /**
+     * @return int
+     */
+    public function getOAuthAuthCodeLifetime(): int
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_OAUTH_AUTH_CODE_LIFETIME);
+        $seconds = is_scalar($value) ? (int) $value : 0;
+        return $seconds > 0 ? $seconds : self::DEFAULT_OAUTH_AUTH_CODE_LIFETIME;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOAuthAccessTokenLifetime(): int
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_OAUTH_ACCESS_TOKEN_LIFETIME);
+        $seconds = is_scalar($value) ? (int) $value : 0;
+        return $seconds > 0 ? $seconds : self::DEFAULT_OAUTH_ACCESS_TOKEN_LIFETIME;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOAuthRefreshTokenLifetimeDays(): int
+    {
+        $value = $this->scopeConfig->getValue(self::XML_PATH_OAUTH_REFRESH_TOKEN_LIFETIME_DAYS);
+        $days = is_scalar($value) ? (int) $value : 0;
+        return $days > 0 ? $days : self::DEFAULT_OAUTH_REFRESH_TOKEN_LIFETIME_DAYS;
+    }
+
+    /**
+     * One of {@see ReauthBehavior::ALLOW_MULTIPLE} / ROTATE / REJECT.
+     *
+     * @return string
+     */
+    public function getOAuthReauthBehavior(): string
+    {
+        return ReauthBehavior::normalize($this->scopeConfig->getValue(self::XML_PATH_OAUTH_REAUTH_BEHAVIOR));
+    }
+
+    /**
+     * Whether the daily Packagist update check + admin banner is active.
+     * @return bool
+     */
+    public function isModuleUpdateCheckEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_MODULE_UPDATES_ENABLED);
+    }
+}

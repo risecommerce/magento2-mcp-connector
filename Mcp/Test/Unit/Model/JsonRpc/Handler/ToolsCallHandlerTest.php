@@ -1,0 +1,536 @@
+<?php
+/**
+ * @author    Risecommerce <info@risecommerce.com>
+ * @copyright Copyright (c) Risecommerce, Ltd. (https://risecommerce.com)
+ * @license   MIT
+ */
+declare(strict_types=1);
+
+namespace Risecommerce\Mcp\Test\Unit\Model\JsonRpc\Handler;
+
+use Risecommerce\Mcp\Api\Data\TokenInterface;
+use Risecommerce\Mcp\Api\LoggerInterface;
+use Risecommerce\Mcp\Api\RateLimiterInterface;
+use Risecommerce\Mcp\Api\ToolInterface;
+use Risecommerce\Mcp\Api\ToolRegistryInterface;
+use Risecommerce\Mcp\Api\ToolResultInterface;
+use Risecommerce\Mcp\Exception\RateLimitedException;
+use Risecommerce\Mcp\Model\Acl\AclChecker;
+use Risecommerce\Mcp\Model\Auth\AuthenticatedContext;
+use Risecommerce\Mcp\Model\Auth\AuthenticatedContextProvider;
+use Risecommerce\Mcp\Model\AuditLog\AuditContext;
+use Risecommerce\Mcp\Model\Config\ModuleConfig;
+use Risecommerce\Mcp\Model\JsonRpc\ErrorCode;
+use Risecommerce\Mcp\Model\JsonRpc\Handler\ToolsCallHandler;
+use Risecommerce\Mcp\Model\JsonRpc\Request;
+use Risecommerce\Mcp\Model\Tool\DisabledTools;
+use Risecommerce\Mcp\Model\Tool\SchemaSanitizer;
+use Risecommerce\Mcp\Model\Tool\WriteMode;
+use Risecommerce\Mcp\Model\Validator\ArgumentCoercer;
+use Risecommerce\Mcp\Model\Validator\JsonSchemaValidator;
+use Magento\Framework\Event\ManagerInterface as EventManager;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\User\Model\User;
+use Opis\JsonSchema\Validator;
+use PHPUnit\Framework\TestCase;
+
+class ToolsCallHandlerTest extends TestCase
+{
+    public function testTranslatesRateLimitedExceptionToRateLimitedErrorCode(): void
+    {
+        $tool = $this->createMock(ToolInterface::class);
+        $tool->method('getName')->willReturn('system.store.list');
+        $tool->method('getAclResource')->willReturn('Risecommerce_Mcp::tool_system_store_list');
+        $tool->method('getWriteMode')->willReturn(WriteMode::READ);
+        $tool->method('getInputSchema')->willReturn(['type' => 'object']);
+
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')
+            ->with('system.store.list')
+            ->willReturn('system.store.list');
+        $toolRegistry->method('get')->with('system.store.list')->willReturn($tool);
+
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getScopes')->willReturn(null);
+        $token->method('getAllowWrites')->willReturn(true);
+
+        $adminUser = $this->createMock(User::class);
+        $adminUser->method('getId')->willReturn(42);
+
+        $aclChecker = $this->createMock(AclChecker::class);
+        $aclChecker->method('isAllowed')->willReturn(true);
+
+        $schemaValidator = $this->createMock(JsonSchemaValidator::class);
+        $schemaValidator->expects($this->once())->method('validate');
+
+        $rateLimiter = $this->createMock(RateLimiterInterface::class);
+        $rateLimiter->expects($this->once())
+            ->method('check')
+            ->with(42, 'system.store.list')
+            ->willThrowException(new RateLimitedException(
+                'Rate limit exceeded: 2 requests/minute for "system.store.list".',
+                2,
+                37
+            ));
+
+        $eventManager = $this->createMock(EventManager::class);
+        $eventManager->expects($this->never())->method('dispatch');
+
+        $config = $this->createMock(ModuleConfig::class);
+        $auditContext = new AuditContext();
+
+        $handler = new ToolsCallHandler(
+            $toolRegistry,
+            $aclChecker,
+            $schemaValidator,
+            $rateLimiter,
+            $eventManager,
+            $config,
+            $auditContext,
+            new AuthenticatedContextProvider(),
+            $this->createMock(LoggerInterface::class),
+            $this->stubArgumentCoercer(),
+            $this->stubSchemaSanitizer(),
+            $this->stubDisabledTools()
+        );
+
+        $request = new Request(
+            7,
+            false,
+            'tools/call',
+            ['name' => 'system.store.list', 'arguments' => []]
+        );
+
+        $response = $handler->handle(
+            $request,
+            new AuthenticatedContext($token, $adminUser)
+        );
+
+        $this->assertNotNull($response->error);
+        $this->assertSame(ErrorCode::RATE_LIMITED, $response->error->code);
+        $this->assertSame(
+            'Rate limit exceeded: 2 requests/minute for "system.store.list".',
+            $response->error->message
+        );
+        $this->assertSame(
+            ['limit' => 2, 'retry_after_seconds' => 37],
+            $response->error->data
+        );
+
+        $this->assertSame('-32013', $auditContext->errorCode);
+    }
+
+    public function testAcceptsUnderscoredWireNameAndDispatchesToCanonicalTool(): void
+    {
+        // Claude.ai sends `system_store_list` (its frontend rejects dots).
+        // The handler must resolve that to the canonical `system.store.list`
+        // tool, run scope/ACL/audit using the canonical name, and execute
+        // successfully.
+        $tool = $this->createMock(ToolInterface::class);
+        $tool->method('getName')->willReturn('system.store.list');
+        $tool->method('getAclResource')->willReturn('Risecommerce_Mcp::tool_system_store_list');
+        $tool->method('getWriteMode')->willReturn(WriteMode::READ);
+        $tool->method('getInputSchema')->willReturn(['type' => 'object']);
+        $result = $this->createMock(ToolResultInterface::class);
+        $result->method('getContent')->willReturn([['type' => 'text', 'text' => 'ok']]);
+        $result->method('isError')->willReturn(false);
+        $result->method('getAuditSummary')->willReturn(['count' => 0]);
+        $tool->method('execute')->willReturn($result);
+
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')
+            ->with('system_store_list')
+            ->willReturn('system.store.list');
+        $toolRegistry->method('get')->with('system.store.list')->willReturn($tool);
+
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getScopes')->willReturn(['system.store.list']);
+        $token->method('getAllowWrites')->willReturn(false);
+
+        $adminUser = $this->createMock(User::class);
+        $adminUser->method('getId')->willReturn(7);
+
+        $aclChecker = $this->createMock(AclChecker::class);
+        $aclChecker->method('isAllowed')->willReturn(true);
+
+        $schemaValidator = $this->createMock(JsonSchemaValidator::class);
+        $rateLimiter = $this->createMock(RateLimiterInterface::class);
+        $rateLimiter->method('check');
+        $eventManager = $this->createMock(EventManager::class);
+        $config = $this->createMock(ModuleConfig::class);
+        $auditContext = new AuditContext();
+        $authenticatedContextProvider = new AuthenticatedContextProvider();
+
+        $handler = new ToolsCallHandler(
+            $toolRegistry,
+            $aclChecker,
+            $schemaValidator,
+            $rateLimiter,
+            $eventManager,
+            $config,
+            $auditContext,
+            $authenticatedContextProvider,
+            $this->createMock(LoggerInterface::class),
+            $this->stubArgumentCoercer(),
+            $this->stubSchemaSanitizer(),
+            $this->stubDisabledTools()
+        );
+
+        $request = new Request(
+            8,
+            false,
+            'tools/call',
+            ['name' => 'system_store_list', 'arguments' => []]
+        );
+
+        $authenticatedContext = new AuthenticatedContext($token, $adminUser);
+        $response = $handler->handle($request, $authenticatedContext);
+
+        $this->assertNull($response->error);
+        $this->assertNotNull($response->result);
+        $this->assertSame('system.store.list', $auditContext->toolName);
+        $this->assertSame($authenticatedContext, $authenticatedContextProvider->get());
+    }
+
+    public function testReturnsToolNotFoundWhenWireNameDoesNotResolve(): void
+    {
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')->willReturn(null);
+        $toolRegistry->method('get')
+            ->willThrowException(new NoSuchEntityException(__('not found')));
+
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getScopes')->willReturn(null);
+        $adminUser = $this->createMock(User::class);
+        $adminUser->method('getId')->willReturn(1);
+
+        $auditContext = new AuditContext();
+        $handler = new ToolsCallHandler(
+            $toolRegistry,
+            $this->createMock(AclChecker::class),
+            $this->createMock(JsonSchemaValidator::class),
+            $this->createMock(RateLimiterInterface::class),
+            $this->createMock(EventManager::class),
+            $this->createMock(ModuleConfig::class),
+            $auditContext,
+            new AuthenticatedContextProvider(),
+            $this->createMock(LoggerInterface::class),
+            $this->stubArgumentCoercer(),
+            $this->stubSchemaSanitizer(),
+            $this->stubDisabledTools()
+        );
+
+        $request = new Request(
+            9,
+            false,
+            'tools/call',
+            ['name' => 'totally_unknown', 'arguments' => []]
+        );
+
+        $response = $handler->handle($request, new AuthenticatedContext($token, $adminUser));
+
+        $this->assertNotNull($response->error);
+        $this->assertSame(ErrorCode::TOOL_NOT_FOUND, $response->error->code);
+        // Audit row preserves the requested wire name so operators can see what
+        // the client actually asked for, not a translated form.
+        $this->assertSame('totally_unknown', $auditContext->toolName);
+    }
+
+    public function testCoercesStringifiedIntegerArgumentBeforeExecuteAndValidation(): void
+    {
+        // MCP bridges/clients frequently stringify typed values (e.g. "50" for an
+        // integer arg). The handler must coerce toward the sanitized wire schema
+        // before validation, so the call succeeds and execute() sees a real int.
+        $tool = $this->createMock(ToolInterface::class);
+        $tool->method('getName')->willReturn('system.store.info');
+        $tool->method('getAclResource')->willReturn('Risecommerce_Mcp::tool_system_store_info');
+        $tool->method('getWriteMode')->willReturn(WriteMode::READ);
+        $tool->method('getInputSchema')->willReturn([
+            'type' => 'object',
+            'properties' => [
+                'store_id' => ['type' => 'integer'],
+            ],
+        ]);
+
+        $receivedArgs = null;
+        $result = $this->createMock(ToolResultInterface::class);
+        $result->method('getContent')->willReturn([['type' => 'text', 'text' => 'ok']]);
+        $result->method('isError')->willReturn(false);
+        $result->method('getAuditSummary')->willReturn(['count' => 0]);
+        $tool->method('execute')
+            ->willReturnCallback(function (array $args) use (&$receivedArgs, $result) {
+                $receivedArgs = $args;
+                return $result;
+            });
+
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')
+            ->with('system.store.info')
+            ->willReturn('system.store.info');
+        $toolRegistry->method('get')->with('system.store.info')->willReturn($tool);
+
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getScopes')->willReturn(null);
+        $token->method('getAllowWrites')->willReturn(false);
+
+        $adminUser = $this->createMock(User::class);
+        $adminUser->method('getId')->willReturn(1);
+
+        $aclChecker = $this->createMock(AclChecker::class);
+        $aclChecker->method('isAllowed')->willReturn(true);
+
+        $rateLimiter = $this->createMock(RateLimiterInterface::class);
+        $eventManager = $this->createMock(EventManager::class);
+        $config = $this->createMock(ModuleConfig::class);
+        $auditContext = new AuditContext();
+
+        $handler = new ToolsCallHandler(
+            $toolRegistry,
+            $aclChecker,
+            new JsonSchemaValidator(new Validator()),
+            $rateLimiter,
+            $eventManager,
+            $config,
+            $auditContext,
+            new AuthenticatedContextProvider(),
+            $this->createMock(LoggerInterface::class),
+            new ArgumentCoercer(),
+            new SchemaSanitizer($this->createMock(LoggerInterface::class)),
+            $this->stubDisabledTools()
+        );
+
+        $request = new Request(
+            10,
+            false,
+            'tools/call',
+            ['name' => 'system.store.info', 'arguments' => ['store_id' => '50']]
+        );
+
+        $response = $handler->handle($request, new AuthenticatedContext($token, $adminUser));
+
+        $this->assertNull($response->error);
+        $this->assertSame(['store_id' => 50], $receivedArgs);
+        $this->assertSame(['store_id' => 50], $auditContext->arguments);
+    }
+
+    public function testDisabledToolFailsAsNotRegistered(): void
+    {
+        // An admin-disabled tool is indistinguishable from an unregistered one on
+        // the wire — same error code, byte-identical message, no execution.
+        $tool = $this->createMock(ToolInterface::class);
+        $tool->method('getName')->willReturn('cms.page.update');
+        $tool->method('getAclResource')->willReturn('Risecommerce_McpCmsTools::tool_cms_page_update');
+        $tool->method('getWriteMode')->willReturn(WriteMode::WRITE);
+        $tool->method('getInputSchema')->willReturn(['type' => 'object']);
+        $tool->expects($this->never())->method('execute');
+
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')
+            ->with('cms.page.update')
+            ->willReturn('cms.page.update');
+        $toolRegistry->method('get')->with('cms.page.update')->willReturn($tool);
+
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getScopes')->willReturn(null);
+        $token->method('getAllowWrites')->willReturn(true);
+
+        $adminUser = $this->createMock(User::class);
+        $adminUser->method('getId')->willReturn(3);
+
+        $aclChecker = $this->createMock(AclChecker::class);
+        $aclChecker->method('isAllowed')->willReturn(true);
+
+        $config = $this->createMock(ModuleConfig::class);
+        $config->method('isAllowWrites')->willReturn(true);
+
+        $auditContext = new AuditContext();
+        $handler = new ToolsCallHandler(
+            $toolRegistry,
+            $aclChecker,
+            $this->createMock(JsonSchemaValidator::class),
+            $this->createMock(RateLimiterInterface::class),
+            $this->createMock(EventManager::class),
+            $config,
+            $auditContext,
+            new AuthenticatedContextProvider(),
+            $this->createMock(LoggerInterface::class),
+            $this->stubArgumentCoercer(),
+            $this->stubSchemaSanitizer(),
+            $this->stubDisabledTools(['cms.page.update'])
+        );
+
+        $request = new Request(
+            11,
+            false,
+            'tools/call',
+            ['name' => 'cms.page.update', 'arguments' => []]
+        );
+
+        $response = $handler->handle($request, new AuthenticatedContext($token, $adminUser));
+
+        $this->assertNotNull($response->error);
+        $this->assertSame(ErrorCode::TOOL_NOT_FOUND, $response->error->code);
+        $this->assertSame('Tool "cms.page.update" is not registered.', $response->error->message);
+    }
+
+    public function testDisabledToolReportsTheRequestedWireNameInTheFailureMessage(): void
+    {
+        // The message quotes the name as the caller sent it, exactly like the
+        // unregistered-tool branch, even though the lookup is canonical.
+        $tool = $this->createMock(ToolInterface::class);
+        $tool->method('getName')->willReturn('cms.page.update');
+        $tool->expects($this->never())->method('execute');
+
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')
+            ->with('cms_page_update')
+            ->willReturn('cms.page.update');
+        $toolRegistry->method('get')->with('cms.page.update')->willReturn($tool);
+
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getScopes')->willReturn(null);
+        $adminUser = $this->createMock(User::class);
+        $adminUser->method('getId')->willReturn(3);
+
+        $handler = new ToolsCallHandler(
+            $toolRegistry,
+            $this->createMock(AclChecker::class),
+            $this->createMock(JsonSchemaValidator::class),
+            $this->createMock(RateLimiterInterface::class),
+            $this->createMock(EventManager::class),
+            $this->createMock(ModuleConfig::class),
+            new AuditContext(),
+            new AuthenticatedContextProvider(),
+            $this->createMock(LoggerInterface::class),
+            $this->stubArgumentCoercer(),
+            $this->stubSchemaSanitizer(),
+            $this->stubDisabledTools(['cms.page.update'])
+        );
+
+        $request = new Request(
+            12,
+            false,
+            'tools/call',
+            ['name' => 'cms_page_update', 'arguments' => []]
+        );
+
+        $response = $handler->handle($request, new AuthenticatedContext($token, $adminUser));
+
+        $this->assertNotNull($response->error);
+        $this->assertSame(ErrorCode::TOOL_NOT_FOUND, $response->error->code);
+        $this->assertSame('Tool "cms_page_update" is not registered.', $response->error->message);
+    }
+
+    /**
+     * @dataProvider disabledToolRequestNames
+     * @param string $requested
+     */
+    public function testDisabledToolIsAuditedUnderItsCanonicalName(string $requested): void
+    {
+        $tool = $this->createMock(ToolInterface::class);
+        $tool->method('getName')->willReturn('catalog.category.list');
+        $tool->expects($this->never())->method('execute');
+
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')->with($requested)->willReturn('catalog.category.list');
+        $toolRegistry->method('get')->willReturn($tool);
+
+        $auditContext = new AuditContext();
+        $response = $this->auditHandler($toolRegistry, $auditContext, ['catalog.category.list'])->handle(
+            new Request(13, false, 'tools/call', ['name' => $requested, 'arguments' => []]),
+            new AuthenticatedContext($this->createMock(TokenInterface::class), $this->createMock(User::class))
+        );
+
+        $this->assertNotNull($response->error);
+        $this->assertSame(ErrorCode::TOOL_NOT_FOUND, $response->error->code);
+        $this->assertSame(sprintf('Tool "%s" is not registered.', $requested), $response->error->message);
+        $this->assertSame('catalog.category.list', $auditContext->toolName);
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function disabledToolRequestNames(): array
+    {
+        return [
+            'wire name' => ['catalog_category_list'],
+            'dotted name' => ['catalog.category.list'],
+        ];
+    }
+
+    public function testUnknownToolIsAuditedUnderTheVerbatimName(): void
+    {
+        $toolRegistry = $this->createMock(ToolRegistryInterface::class);
+        $toolRegistry->method('getCanonicalName')->willReturn(null);
+
+        $auditContext = new AuditContext();
+        $this->auditHandler($toolRegistry, $auditContext, [])->handle(
+            new Request(14, false, 'tools/call', ['name' => 'no_such_tool', 'arguments' => []]),
+            new AuthenticatedContext($this->createMock(TokenInterface::class), $this->createMock(User::class))
+        );
+
+        $this->assertSame('no_such_tool', $auditContext->toolName);
+    }
+
+    /**
+     * @param ToolRegistryInterface $toolRegistry
+     * @param AuditContext $auditContext
+     * @param array $disabled
+     * @phpstan-param list<string> $disabled
+     * @return ToolsCallHandler
+     */
+    private function auditHandler(
+        ToolRegistryInterface $toolRegistry,
+        AuditContext $auditContext,
+        array $disabled
+    ): ToolsCallHandler {
+        return new ToolsCallHandler(
+            $toolRegistry,
+            $this->createMock(AclChecker::class),
+            $this->createMock(JsonSchemaValidator::class),
+            $this->createMock(RateLimiterInterface::class),
+            $this->createMock(EventManager::class),
+            $this->createMock(ModuleConfig::class),
+            $auditContext,
+            new AuthenticatedContextProvider(),
+            $this->createMock(LoggerInterface::class),
+            $this->stubArgumentCoercer(),
+            $this->stubSchemaSanitizer(),
+            $this->stubDisabledTools($disabled)
+        );
+    }
+
+    /**
+     * @return ArgumentCoercer
+     */
+    private function stubArgumentCoercer(): ArgumentCoercer
+    {
+        $coercer = $this->createMock(ArgumentCoercer::class);
+        $coercer->method('coerce')->willReturnArgument(1);
+        return $coercer;
+    }
+
+    /**
+     * @return SchemaSanitizer
+     */
+    private function stubSchemaSanitizer(): SchemaSanitizer
+    {
+        $sanitizer = $this->createMock(SchemaSanitizer::class);
+        $sanitizer->method('sanitize')->willReturn(['type' => 'object']);
+        return $sanitizer;
+    }
+
+    /**
+     * @param array $disabled
+     * @phpstan-param list<string> $disabled
+     * @return DisabledTools
+     */
+    private function stubDisabledTools(array $disabled = []): DisabledTools
+    {
+        $disabledTools = $this->createMock(DisabledTools::class);
+        $disabledTools->method('isDisabled')->willReturnCallback(
+            static fn (string $name): bool => in_array($name, $disabled, true)
+        );
+        return $disabledTools;
+    }
+}
