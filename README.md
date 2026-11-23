@@ -1,5 +1,4 @@
-
-<h1 align="center">Risecommerce Magento 2 MCP</h1>
+<h1 align="center">Risecommerce Magento 2 MCP Connector Free ( self hosted ) </h1>
 <h3 align="center">Connect your Magento 2 store to Claude, ChatGPT, Manus and any AI agent</h3>
 
 <p align="center">
@@ -110,6 +109,7 @@ The default **Allowed Origins** list already includes Claude, ChatGPT, Gemini, C
 ## Contents
 
 - [What it can do](#-what-it-can-do)
+- [Example tasks by module](#-example-tasks-by-module)
 - [How it works](#️-how-it-works)
 - [Installation](#-installation)
 - [Included modules and tools](#-included-modules-and-tools)
@@ -142,6 +142,225 @@ The default **Allowed Origins** list already includes Claude, ChatGPT, Gemini, C
 | ⚙️ **System and DevOps** | "Which indexers are invalid? Reindex them", "Flush the full-page cache", "Why didn't the sitemap cron run?", "Grep `exception.log` for 'CyberSource'", "Which modules are installed?" |
 
 **Built-in prompts.** The server also ships MCP *prompts*, reusable workflows the AI client can offer as one-click actions (see `Mcp/Prompt/System`).
+
+---
+
+## 💡 Example tasks by module
+
+Click a module to see real requests you can give your AI assistant, and what the extension does with each one.
+
+<details>
+<summary><b>⚙️ System tools</b> (base module): cache, indexers, cron, logs, configuration</summary>
+
+**"Which indexers are out of date? Fix them."**
+It lists every indexer with its status, reindexes the invalid ones, and can switch an indexer between *Update on Save* and *Update by Schedule*.
+
+**"Clear the cache after my product import."**
+It lists cache types, then cleans or flushes them. It can also enable or disable individual cache types.
+
+**"Why didn't the sitemap or catalog price rule cron run last night?"**
+It shows each cron job's last success and last error, and flags jobs that look stuck.
+
+**"Search exception.log for payment errors from today."**
+It lists the log files in `var/log`, shows the last lines of one, or searches it for text such as "CyberSource", without needing server access.
+
+**"What's the store's current setting for guest checkout?"**
+It reads any configuration value as the store actually uses it. If you've put a path on the allowlist, it can also change it.
+
+**"Which store views and websites do we have, and which modules are installed?"**
+It lists stores, store views and installed modules. This tells the AI which tools the store can support.
+
+**"Any admin notifications I should know about?"**
+It reads the admin inbox messages.
+
+</details>
+
+<details>
+<summary><b>🛒 Order tools</b>: orders, invoices, shipments, credit memos</summary>
+
+**"Why hasn't order #1234 shipped?"**
+It shows the order with its status, items, payment, invoices, shipments and comments.
+
+**"Invoice and ship order #1234 with UPS tracking 1Z999…"**
+It creates the invoice and the shipment, then adds the tracking number.
+
+**"Refund the damaged item on order #1190."**
+It creates a credit memo for the chosen items.
+
+**"Put order #1250 on hold until the customer confirms the address."**
+It holds the order and adds a comment. Later it can release the hold or cancel the order.
+
+**"Show unshipped orders from last week over $500."**
+It searches orders by status, date and total.
+
+**"Which payment method was used on order #1300?"**
+It shows the order's payment details.
+
+</details>
+
+<details>
+<summary><b>📦 Catalog tools</b>: products, categories, images, stock</summary>
+
+**"Change the price of SKU ABC-1 to $49 and set it to out of stock."**
+It updates the product, including its price, status and stock.
+
+**"Find products with no image or no description."**
+It searches products by their attributes.
+
+**"Upload this photo as the main image for SKU X."**
+It adds, replaces or removes product images and sets their roles.
+
+**"Create a 'Winter Sale' category under Women."**
+It creates, renames, moves or deletes categories.
+
+**"Set stock to 0 for these 50 discontinued SKUs."**
+It sets stock levels in bulk.
+
+**"Create a new simple product from this spec sheet."**
+It creates new products. It can also delete products.
+
+</details>
+
+<details>
+<summary><b>🏬 Inventory tools</b> (MSI): sources, stocks, salable quantity, transfers</summary>
+
+**"Why does SKU X show out of stock when the warehouse has 20?"**
+It reports the salable quantity and the reservations holding stock back.
+
+**"Move 20 units of SKU X from Warehouse A to Warehouse B."**
+It transfers inventory between sources, all of it or a set quantity.
+
+**"Add a new source for our Delhi warehouse and assign it to the default stock."**
+It creates sources and stocks, and links sources to stocks.
+
+**"Assign these 200 SKUs to the new source."**
+It assigns or unassigns SKUs to sources in bulk.
+
+**"Which website does the EU stock sell on?"**
+It shows and sets the sales channels for each stock.
+
+**"Set the notify-for-quantity-below level to 5 for SKU X."**
+It reads and updates stock settings for a product.
+
+</details>
+
+<details>
+<summary><b>👤 Customer tools</b>: customers, addresses, groups, account emails</summary>
+
+**"Find the customer with email jane@example.com and show her addresses."**
+It looks up the customer, their addresses and their customer group.
+
+**"Add a new shipping address for customer #88."**
+It creates, updates or deletes addresses.
+
+**"The customer says she never got the confirmation email."**
+It checks whether the account is confirmed and resends the email.
+
+**"Send a password reset to this customer."**
+It triggers Magento's password reset email.
+
+**"Move this customer to the Wholesale group."**
+It updates the customer's details and group. It can also create new customers or delete them.
+
+</details>
+
+<details>
+<summary><b>📝 CMS tools</b>: pages and blocks</summary>
+
+**"Update the shipping policy page with the new delivery times."**
+It edits a CMS page's content, title and meta data.
+
+**"Create a Black Friday banner block for the homepage."**
+It creates CMS blocks.
+
+**"List all disabled CMS pages."**
+It searches pages and blocks.
+
+**"Remove the old 2023 holiday pages."**
+It deletes pages or blocks.
+
+</details>
+
+<details>
+<summary><b>🎯 Marketing tools</b>: catalog rules, cart rules, coupons</summary>
+
+**"Generate 50 unique coupon codes for the BLACKFRIDAY rule."**
+It generates codes for an existing cart price rule.
+
+**"Which cart rules are active right now?"**
+It lists cart and catalog price rules with their status.
+
+**"Switch off the 10% catalog rule and apply the rules."**
+It enables or disables a rule, then re-applies all catalog rules.
+
+**"How many times has coupon SAVE20 been used?"**
+It looks up the coupon and its usage.
+
+**"Delete the expired summer sale rule and its coupons."**
+It deletes rules and coupons.
+
+> This module manages, toggles and applies the price rules you already have. It doesn't create new ones.
+
+</details>
+
+<details>
+<summary><b>💱 Tax and currency tools</b>: tax rates, rules, classes, exchange rates</summary>
+
+**"Add a 7% tax rate for Florida."**
+It creates tax rates and attaches them to tax rules.
+
+**"Which tax class is used for shipping?"**
+It reads tax classes, rules and rates.
+
+**"Import today's exchange rates."**
+It imports rates from the currency service you've configured, or sets them by hand.
+
+**"Which currencies does the store allow?"**
+It reads the base, default and allowed currencies.
+
+</details>
+
+<details>
+<summary><b>📊 Report tools</b>: sales, products, customers, carts, search terms</summary>
+
+**"What were our best sellers this month?"**
+It shows bestsellers, most viewed products and quantities ordered.
+
+**"Show abandoned carts over $200 from the last week."**
+It reports abandoned carts and products sitting in carts.
+
+**"Revenue for the last 30 days compared with the 30 days before."**
+It runs sales reports for orders, tax, invoices, shipping, refunds and coupons.
+
+**"Which products are running low on stock?"**
+It runs the low-stock report.
+
+**"What are customers searching for that returns no results?"**
+It lists popular search terms.
+
+**"Who are our top customers by order total?"**
+It runs customer reports for orders, totals, new accounts and visitors online now.
+
+**"Refresh the report statistics."**
+It refreshes the recent or lifetime statistics.
+
+</details>
+
+<details>
+<summary><b>🔌 Optional add-on modules</b>: Google Analytics 4, Hyvä Commerce, database query</summary>
+
+**Google Analytics 4: "Which traffic source brought the most purchases last month?" or "How many users are on the site right now?"**
+It runs GA4 reports, including real-time and funnel reports.
+
+**Hyvä Commerce: "Schedule the new homepage draft to publish on Friday" or "Add a Sale link to the main menu."**
+It works with Hyvä CMS drafts and publishing, Menu Builder, forms and Store Credit.
+
+**Database query: "How many orders used each shipping method this year?"**
+It runs one guarded, read-only query, and only on tables you've allowlisted.
+
+</details>
+
+> Every write action still needs write access switched on, a token or OAuth scope that allows writes, and an admin role with permission for that tool. See [Security](#-security).
 
 ---
 
@@ -754,7 +973,7 @@ Risecommerce Magento 2 MCP is one of a family of Magento 2 extensions and tools 
 ---
 
 <p align="center">
-  <img src="https://risecommerce.com/store/media/logo/stores/1/riselogo--red.svg" alt="Risecommerce" width="240"><br>
+  <a href="https://risecommerce.com"><img src="https://risecommerce.com/store/media/logo/stores/1/riselogo--red.svg" alt="Risecommerce" width="220"></a><br><br>
   <b>Risecommerce</b>: full-service e-commerce agency · Adobe Certified Magento developers · Hyvä Partner<br>
   <a href="https://risecommerce.com">risecommerce.com</a> · <a href="https://risecommerce.com/store/magento-2-extensions.html">Magento 2 extensions</a> · <a href="https://risecommerce.com/contact">Contact</a>
 </p>
