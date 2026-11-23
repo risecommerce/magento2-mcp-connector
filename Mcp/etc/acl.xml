@@ -53,6 +53,196 @@
                                       title="Tool: Tail Log File" sortOrder="170"/>
                             <resource id="Risecommerce_Mcp::tool_system_log_grep"
                                       title="Tool: Search Log File" sortOrder="180"/>
+
+                            <!-- Risecommerce_McpCatalogTools -->
+
+                            <!-- Read tools -->
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_list"
+                                      title="Tool: List Products" sortOrder="100"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_get"
+                                      title="Tool: Get Product" sortOrder="101"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_list"
+                                      title="Tool: List Categories" sortOrder="110"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_get"
+                                      title="Tool: Get Category" sortOrder="111"/>
+
+                            <!-- Write tools -->
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_create"
+                                      title="Tool: Create Product" sortOrder="200"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_update"
+                                      title="Tool: Update Product" sortOrder="201"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_delete"
+                                      title="Tool: Delete Product" sortOrder="202"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_create"
+                                      title="Tool: Create Category" sortOrder="210"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_update"
+                                      title="Tool: Update Category" sortOrder="211"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_category_delete"
+                                      title="Tool: Delete Category" sortOrder="212"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_stock_set"
+                                      title="Tool: Set Product Stock" sortOrder="220"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_media_add"
+                                      title="Tool: Add Product Image" sortOrder="230"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_media_update"
+                                      title="Tool: Update Product Image" sortOrder="231"/>
+                            <resource id="Risecommerce_McpCatalogTools::tool_catalog_product_media_remove"
+                                      title="Tool: Remove Product Image" sortOrder="232"/>
+
+                            <!-- Risecommerce_McpCmsTools -->
+
+                            <!-- Read tools -->
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_page_list"
+                                      title="Tool: List CMS Pages" sortOrder="100"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_page_get"
+                                      title="Tool: Get CMS Page" sortOrder="101"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_block_list"
+                                      title="Tool: List CMS Blocks" sortOrder="110"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_block_get"
+                                      title="Tool: Get CMS Block" sortOrder="111"/>
+
+                            <!-- Write tools -->
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_page_create"
+                                      title="Tool: Create CMS Page" sortOrder="200"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_page_update"
+                                      title="Tool: Update CMS Page" sortOrder="201"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_page_delete"
+                                      title="Tool: Delete CMS Page" sortOrder="202"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_block_create"
+                                      title="Tool: Create CMS Block" sortOrder="210"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_block_update"
+                                      title="Tool: Update CMS Block" sortOrder="211"/>
+                            <resource id="Risecommerce_McpCmsTools::tool_cms_block_delete"
+                                      title="Tool: Delete CMS Block" sortOrder="212"/>
+
+                            <!-- Risecommerce_McpCustomerTools -->
+
+                            <!-- Read tools -->
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_customer_list"
+                                      title="Tool: List Customers" sortOrder="100"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_customer_get"
+                                      title="Tool: Get Customer" sortOrder="101"/>
+
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_address_list"
+                                      title="Tool: List Customer Addresses" sortOrder="110"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_address_get"
+                                      title="Tool: Get Customer Address" sortOrder="111"/>
+
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_group_list"
+                                      title="Tool: List Customer Groups" sortOrder="120"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_group_get"
+                                      title="Tool: Get Customer Group" sortOrder="121"/>
+
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_account_confirmation_status"
+                                      title="Tool: Get Account Confirmation Status" sortOrder="130"/>
+
+                            <!-- Write tools -->
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_customer_create"
+                                      title="Tool: Create Customer" sortOrder="200"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_customer_update"
+                                      title="Tool: Update Customer" sortOrder="201"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_customer_delete"
+                                      title="Tool: Delete Customer" sortOrder="202"/>
+
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_address_create"
+                                      title="Tool: Create Customer Address" sortOrder="210"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_address_update"
+                                      title="Tool: Update Customer Address" sortOrder="211"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_address_delete"
+                                      title="Tool: Delete Customer Address" sortOrder="212"/>
+
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_account_reset_password"
+                                      title="Tool: Initiate Password Reset" sortOrder="220"/>
+                            <resource id="Risecommerce_McpCustomerTools::tool_customer_account_resend_confirmation"
+                                      title="Tool: Resend Account Confirmation" sortOrder="221"/>
+
+                            <!-- Risecommerce_McpOrderTools -->
+
+                            <!-- Read tools -->
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_list"
+                                      title="Tool: List Orders" sortOrder="100"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_get"
+                                      title="Tool: Get Order" sortOrder="101"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_item_list"
+                                      title="Tool: List Order Items" sortOrder="102"/>
+
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_invoices"
+                                      title="Tool: List Invoices for Order" sortOrder="110"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_invoice_get"
+                                      title="Tool: Get Invoice" sortOrder="111"/>
+
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_shipments"
+                                      title="Tool: List Shipments for Order" sortOrder="120"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_shipment_get"
+                                      title="Tool: Get Shipment" sortOrder="121"/>
+
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_payment"
+                                      title="Tool: Get Order Payment" sortOrder="130"/>
+
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_comments"
+                                      title="Tool: List Order Comments" sortOrder="140"/>
+
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_credit_memos"
+                                      title="Tool: List Credit Memos for Order" sortOrder="150"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_credit_memo_get"
+                                      title="Tool: Get Credit Memo" sortOrder="151"/>
+
+                            <!-- Write tools -->
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_invoice_create"
+                                      title="Tool: Invoice an Order" sortOrder="200"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_shipment_create"
+                                      title="Tool: Ship an Order" sortOrder="210"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_shipment_track_add"
+                                      title="Tool: Add Tracking Numbers" sortOrder="211"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_credit_memo_create"
+                                      title="Tool: Credit Memo (Refund) an Order" sortOrder="220"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_cancel"
+                                      title="Tool: Cancel Order" sortOrder="230"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_hold"
+                                      title="Tool: Hold Order" sortOrder="240"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_unhold"
+                                      title="Tool: Release Order Hold" sortOrder="241"/>
+                            <resource id="Risecommerce_McpOrderTools::tool_sales_order_comment_add"
+                                      title="Tool: Add Order Comment" sortOrder="250"/>
+
+                            <!-- Risecommerce_McpMarketingTools -->
+
+                            <!-- Catalog rule read tools -->
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_catalog_rule_list"
+                                      title="Tool: List Catalog Rules" sortOrder="100"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_catalog_rule_get"
+                                      title="Tool: Get Catalog Rule" sortOrder="101"/>
+
+                            <!-- Cart rule read tools -->
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_list"
+                                      title="Tool: List Cart Price Rules" sortOrder="110"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_get"
+                                      title="Tool: Get Cart Price Rule" sortOrder="111"/>
+
+                            <!-- Coupon read tools -->
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_coupon_list"
+                                      title="Tool: List Coupons" sortOrder="120"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_coupon_get"
+                                      title="Tool: Get Coupon" sortOrder="121"/>
+
+                            <!-- Catalog rule write tools -->
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_catalog_rule_delete"
+                                      title="Tool: Delete Catalog Rule" sortOrder="200"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_catalog_rule_set_active"
+                                      title="Tool: Activate / Deactivate Catalog Rule" sortOrder="201"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_catalog_rule_apply_all"
+                                      title="Tool: Apply All Catalog Rules" sortOrder="202"/>
+
+                            <!-- Cart rule write tools -->
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_delete"
+                                      title="Tool: Delete Cart Price Rule" sortOrder="210"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_set_active"
+                                      title="Tool: Activate / Deactivate Cart Price Rule" sortOrder="211"/>
+
+                            <!-- Coupon write tools -->
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_coupon_generate"
+                                      title="Tool: Generate Coupon Codes" sortOrder="220"/>
+                            <resource id="Risecommerce_McpMarketingTools::tool_marketing_cart_rule_coupon_delete"
+                                      title="Tool: Delete Coupons" sortOrder="221"/>
                         </resource>
                         <resource id="Risecommerce_Mcp::config" title="MCP Configuration" sortOrder="40"/>
                     </resource>

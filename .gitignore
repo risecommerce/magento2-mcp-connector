@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Dependencies / build
+vendor/
+node_modules/
+composer.lock
+
+# Test / tooling caches
+.phpunit.cache/
+.phpunit.result.cache
+.phpstan.cache/
+.php-cs-fixer.cache
+.playwright-mcp
+
+# IDE
+.idea/
+.vscode/
+
+# Local planning docs
+docs/plan/

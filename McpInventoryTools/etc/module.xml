@@ -4,9 +4,6 @@
     <module name="Risecommerce_McpInventoryTools">
         <sequence>
             <module name="Risecommerce_Mcp"/>
-            <!-- Required: this module supplies the MSI-backed single-source
-                 check and the salable_qty resolver that the catalog tools use. -->
-            <module name="Risecommerce_McpCatalogTools"/>
             <module name="Magento_InventoryApi"/>
             <module name="Magento_InventorySalesApi"/>
             <module name="Magento_InventoryCatalogApi"/>

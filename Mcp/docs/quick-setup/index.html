@@ -48,30 +48,12 @@
     </div>
 
     <h3>What should the AI be able to do?</h3>
-    <p>Tick what applies. The install commands below update to match.</p>
+    <p>Orders, products &amp; categories, customers, CMS pages and discounts are always included in the MCP Connector. Tick the extras you want. The install commands below update to match.</p>
 
     <ul class="featurelist" id="featurelist">
       <li>
         <label>
-          <input type="checkbox" data-module="order" data-package="risecommerce/magento2-mcp-order-tools" data-name="Risecommerce_McpOrderTools" checked>
-          <span class="featurelist__body">
-            <span class="featurelist__title">Orders</span>
-            <span class="featurelist__desc">Look up orders. Create invoices, shipments, refunds.</span>
-          </span>
-        </label>
-      </li>
-      <li>
-        <label>
-          <input type="checkbox" data-module="catalog" data-package="risecommerce/magento2-mcp-catalog-tools" data-name="Risecommerce_McpCatalogTools" checked>
-          <span class="featurelist__body">
-            <span class="featurelist__title">Products &amp; categories</span>
-            <span class="featurelist__desc">Read products, change prices, edit categories.</span>
-          </span>
-        </label>
-      </li>
-      <li>
-        <label>
-          <input type="checkbox" data-module="inventory" data-package="risecommerce/magento2-mcp-inventory-tools" data-name="Risecommerce_McpInventoryTools" checked>
+          <input type="checkbox" data-module="inventory" data-package="" data-name="Risecommerce_McpInventoryTools" checked>
           <span class="featurelist__body">
             <span class="featurelist__title">Inventory</span>
             <span class="featurelist__desc">Check and update stock across warehouses. Needs Multi-Source Inventory.</span>
@@ -80,34 +62,7 @@
       </li>
       <li>
         <label>
-          <input type="checkbox" data-module="customer" data-package="risecommerce/magento2-mcp-customer-tools" data-name="Risecommerce_McpCustomerTools" checked>
-          <span class="featurelist__body">
-            <span class="featurelist__title">Customers</span>
-            <span class="featurelist__desc">Look up customer accounts, addresses and groups.</span>
-          </span>
-        </label>
-      </li>
-      <li>
-        <label>
-          <input type="checkbox" data-module="cms" data-package="risecommerce/magento2-mcp-cms-tools" data-name="Risecommerce_McpCmsTools" checked>
-          <span class="featurelist__body">
-            <span class="featurelist__title">CMS pages</span>
-            <span class="featurelist__desc">Edit storefront pages and content blocks.</span>
-          </span>
-        </label>
-      </li>
-      <li>
-        <label>
-          <input type="checkbox" data-module="marketing" data-package="risecommerce/magento2-mcp-marketing-tools" data-name="Risecommerce_McpMarketingTools" checked>
-          <span class="featurelist__body">
-            <span class="featurelist__title">Discounts</span>
-            <span class="featurelist__desc">Manage discount rules and coupon codes.</span>
-          </span>
-        </label>
-      </li>
-      <li>
-        <label>
-          <input type="checkbox" data-module="tax" data-package="risecommerce/magento2-mcp-tax-tools" data-name="Risecommerce_McpTaxTools" checked>
+          <input type="checkbox" data-module="tax" data-package="" data-name="Risecommerce_McpTaxTools" checked>
           <span class="featurelist__body">
             <span class="featurelist__title">Tax &amp; currency</span>
             <span class="featurelist__desc">Manage tax rates, rules and classes. Update exchange rates.</span>
@@ -116,7 +71,7 @@
       </li>
       <li>
         <label>
-          <input type="checkbox" data-module="report" data-package="risecommerce/magento2-mcp-report-tools" data-name="Risecommerce_McpReportTools" checked>
+          <input type="checkbox" data-module="report" data-package="" data-name="Risecommerce_McpReportTools" checked>
           <span class="featurelist__body">
             <span class="featurelist__title">Reports &amp; statistics</span>
             <span class="featurelist__desc">Pull sales, customer and product reports.</span>
@@ -162,10 +117,6 @@
     <div class="codeblock">
       <button class="codeblock__copy" data-copy="cmd-install" aria-label="Copy install commands">Copy</button>
       <pre><code id="cmd-install"></code></pre>
-    </div>
-
-    <div class="callout callout--tip" data-suite-note hidden>
-      <p><strong>That's one package instead of nine.</strong> You kept the whole standard set ticked, so the command above installs <a href="https://github.com/risecommerce/magento2-mcp-suite"><code>magento2-mcp-suite</code></a> — a bundle that brings in the MCP module and those eight tool modules together. Untick any of them and the commands switch to installing each one separately. Either way you can turn individual modules off later in <code>app/etc/config.php</code>, without touching Composer.</p>
     </div>
 
     <div class="callout callout--tip">

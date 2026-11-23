@@ -16,11 +16,18 @@ use Throwable;
  */
 final class Analyzer
 {
+    private readonly ContextEnhancerInterface $enhancer;
+    private readonly OverlapResolver $resolver;
+
+    // Defaults are null, not `new …()`: Magento's DI compiler var_exports default values into
+    // generated/metadata/global.php, and an object default becomes a fatal `::__set_state()` call.
     public function __construct(
         private readonly DetectorRegistry $registry,
-        private readonly ContextEnhancerInterface $enhancer = new ContextEnhancer(),
-        private readonly OverlapResolver $resolver = new OverlapResolver(),
+        ?ContextEnhancerInterface $enhancer = null,
+        ?OverlapResolver $resolver = null,
     ) {
+        $this->enhancer = $enhancer ?? new ContextEnhancer();
+        $this->resolver = $resolver ?? new OverlapResolver();
     }
 
     /**

@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace Risecommerce\McpInventoryTools\Model\Stock;
 
-use Risecommerce\McpCatalogTools\Api\SingleSourceModeCheckerInterface;
+use Risecommerce\Mcp\Api\SingleSourceModeCheckerInterface;
 use Magento\InventoryCatalogApi\Model\IsSingleSourceModeInterface;
 
 /**

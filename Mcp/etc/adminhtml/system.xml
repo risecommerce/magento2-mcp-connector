@@ -2,6 +2,9 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
+        <tab id="risecommerce" translate="label" sortOrder="10" class="risecommerce-config-tab">
+            <label>Risecommerce</label>
+        </tab>
         <section id="risecommerce_mcp" translate="label" type="text" sortOrder="500"
                  showInDefault="1" showInWebsite="0" showInStore="0">
             <class>separator-top</class>

@@ -2,7 +2,7 @@
 
 Third-party modules expose new MCP tools by implementing `Risecommerce\Mcp\Api\ToolInterface` and registering the class with the `ToolRegistry` via `etc/di.xml`. The registry is a DI-array — Magento merges contributions at compile time, so conflicts fail at `bin/magento setup:di:compile` rather than at runtime.
 
-For a canonical satellite that ships a full catalog of read + write tools with caller-driven field selection, see `Risecommerce_McpOrderTools`. It demonstrates:
+For a canonical satellite that ships a full catalog of read + write tools with caller-driven field selection, see the order tools in this module (`Tool/Sales/Order`). They demonstrate:
 
 - The **field-resolver pattern** (`FieldResolverInterface` + `ResolverPipeline` in this module; per-entity sub-interfaces like `OrderFieldResolverInterface` in the satellite) for building tool responses out of DI-injected, 3rd-party-extendable fragments.
 - The **underlying-ACL layering** (`UnderlyingAclAwareInterface`) for write tools that should refuse calls from admins who wouldn't have the equivalent permission in the admin UI. `tools/list` filters on it too, so such a tool is never advertised to a role that cannot call it.
@@ -353,7 +353,7 @@ To ship a write tool, return `WriteMode::WRITE` from `getWriteMode()`. The dispa
 
 Both must pass; either fails → `-32012 Write not allowed`, with `error.data.reason` = `store_setting` (the config switch, checked first) or `token`.
 
-Write tools SHOULD return `getConfirmationRequired(): true` so MCP clients that support user confirmation (Claude Desktop does) prompt the human before executing. Read tools return `false`. See `Risecommerce_McpOrderTools` for a canonical example of both.
+Write tools SHOULD return `getConfirmationRequired(): true` so MCP clients that support user confirmation (Claude Desktop does) prompt the human before executing. Read tools return `false`. See the order tools (`Tool/Sales/Order`) for a canonical example of both.
 
 ## Testing a tool locally
 

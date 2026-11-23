@@ -81,12 +81,12 @@
 
     <!-- Replaces the catalog module's optimistic default so
          `catalog.product.stock.set` warns on multi-source stores. -->
-    <preference for="Risecommerce\McpCatalogTools\Api\SingleSourceModeCheckerInterface"
+    <preference for="Risecommerce\Mcp\Api\SingleSourceModeCheckerInterface"
                 type="Risecommerce\McpInventoryTools\Model\Stock\MsiSingleSourceModeChecker"/>
 
     <!-- Bolt the MSI salable-quantity slice onto the catalog read tools. DI
          array items merge, so the catalog module's own resolvers stay. -->
-    <type name="Risecommerce\McpCatalogTools\Tool\Catalog\Product\ProductGet">
+    <type name="Risecommerce\Mcp\Tool\Catalog\Product\ProductGet">
         <arguments>
             <argument name="fieldResolvers" xsi:type="array">
                 <item name="salable_qty" xsi:type="object">

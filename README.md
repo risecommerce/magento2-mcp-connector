@@ -402,15 +402,9 @@ flowchart LR
 
    ```text
    app/code/Risecommerce/
-   ├── Core/
    ├── PiiRedactor/
-   ├── Mcp/
-   ├── McpCatalogTools/
-   ├── McpCmsTools/
-   ├── McpCustomerTools/
+   ├── Mcp/                  (MCP Connector: server + catalog, CMS, customer, order, marketing tools)
    ├── McpInventoryTools/
-   ├── McpMarketingTools/
-   ├── McpOrderTools/
    ├── McpReportTools/
    └── McpTaxTools/
    ```
@@ -419,15 +413,9 @@ flowchart LR
 
    ```bash
    bin/magento module:enable \
-     Risecommerce_Core \
      Risecommerce_PiiRedactor \
      Risecommerce_Mcp \
-     Risecommerce_McpCatalogTools \
-     Risecommerce_McpCmsTools \
-     Risecommerce_McpCustomerTools \
      Risecommerce_McpInventoryTools \
-     Risecommerce_McpMarketingTools \
-     Risecommerce_McpOrderTools \
      Risecommerce_McpReportTools \
      Risecommerce_McpTaxTools
    bin/magento setup:upgrade
@@ -437,37 +425,28 @@ flowchart LR
 
 The PII redactor ships as `Risecommerce_PiiRedactor`, so this app/code package doesn't need a separate Composer vendor package for it.
 
-You don't need every tool module. Leave any `McpXxxTools` module out of the `module:enable` list (or set it to `0` in `app/etc/config.php`) to keep it switched off. `Risecommerce_McpInventoryTools` needs Magento's Multi-Source Inventory; on a single-stock store, `catalog.product.stock.set` in the catalog module is enough.
+Catalog, CMS, customer, order and marketing tools are part of `Risecommerce_Mcp`; hide any of them with **System → MCP → Tools**. The inventory, report and tax modules are optional: leave any `McpXxxTools` module out of the `module:enable` list (or set it to `0` in `app/etc/config.php`) to keep it switched off. `Risecommerce_McpInventoryTools` needs Magento's Multi-Source Inventory; on a single-stock store, `catalog.product.stock.set` in the catalog module is enough.
 
 ### Option B: Composer
 
-Base server plus the `system.*` tools only:
+One package installs everything: the MCP server, the PII redactor and every tool module (catalog, CMS, customer, order, marketing, inventory, report and tax):
 
 ```bash
-composer require risecommerce/magento2-mcp-module
-bin/magento module:enable Risecommerce_Mcp
+composer require risecommerce/magento2-mcp-connector
+bin/magento module:enable Risecommerce_PiiRedactor Risecommerce_Mcp \
+  Risecommerce_McpInventoryTools Risecommerce_McpReportTools Risecommerce_McpTaxTools
 bin/magento setup:upgrade
 ```
 
-Everything at once (catalog, CMS, customer, inventory, marketing, order, report and tax) through the [suite meta-package](https://github.com/risecommerce/magento2-mcp-connector):
+**No Multi-Source Inventory on your store?** Run `bin/magento module:disable Risecommerce_McpInventoryTools` before `setup:upgrade`; `catalog.product.stock.set` covers single-stock stores.
 
-```bash
-composer require risecommerce/magento2-mcp-suite
-bin/magento setup:upgrade
-```
-
-The suite has no code of its own, only a dependency list. After installing, you choose which tools are active in `app/etc/config.php` (`1` = enabled, `0` = disabled):
+You choose which tool modules are active in `app/etc/config.php` (`1` = enabled, `0` = disabled):
 
 ```php
 'modules' => [
     // ...
     'Risecommerce_Mcp' => 1,
-    'Risecommerce_McpCatalogTools' => 1,
-    'Risecommerce_McpCmsTools' => 1,
-    'Risecommerce_McpCustomerTools' => 1,
     'Risecommerce_McpInventoryTools' => 1,
-    'Risecommerce_McpMarketingTools' => 1,
-    'Risecommerce_McpOrderTools' => 1,
     'Risecommerce_McpReportTools' => 0,
     'Risecommerce_McpTaxTools' => 0,
 ],
@@ -492,15 +471,9 @@ Because `config.php` is committed, this lets each environment expose a different
 
 | Module | What it adds |
 |---|---|
-| `Risecommerce_Core` | Shared Risecommerce foundation |
 | `Risecommerce_PiiRedactor` | Redacts personal data before it reaches the audit log |
-| `Risecommerce_Mcp` | **The MCP server**: `/mcp` endpoint, bearer and OAuth 2.1 auth, ACL, audit log, rate limiter, origin allowlist, tool registry, prompts and the `system.*` tools |
-| `Risecommerce_McpOrderTools` | Orders, invoices, shipments, tracking, payments, comments, credit memos; cancel / hold / unhold |
-| `Risecommerce_McpCatalogTools` | Products and categories (CRUD), bulk stock levels, product images |
+| `Risecommerce_Mcp` (MCP Connector) | **The MCP server**: `/mcp` endpoint, bearer and OAuth 2.1 auth, ACL, audit log, rate limiter, origin allowlist, tool registry, prompts and the `system.*` tools. **Also includes:** orders, invoices, shipments, tracking, payments, comments, credit memos (cancel / hold / unhold); products and categories (CRUD), bulk stock levels, product images; customers, addresses, groups, confirmation status, password reset; CMS pages and blocks (CRUD); catalog and cart rules, coupons |
 | `Risecommerce_McpInventoryTools` | MSI sources, stocks, source items, salable qty and reservations, bulk assign / unassign / transfer |
-| `Risecommerce_McpCustomerTools` | Customers, addresses, groups, confirmation status, password reset, resend confirmation |
-| `Risecommerce_McpCmsTools` | CMS pages and blocks (CRUD) |
-| `Risecommerce_McpMarketingTools` | Catalog and cart rules, coupons (generate / delete), toggle and apply rules |
 | `Risecommerce_McpTaxTools` | Tax rates, rules and classes (CRUD), currency configuration, exchange rates (set / import) |
 | `Risecommerce_McpReportTools` | Sales, tax, invoice, shipping, refund and coupon reports; carts and abandoned carts; customers; bestsellers, most viewed and low stock; reviews; search terms; dashboard summary; statistics refresh |
 

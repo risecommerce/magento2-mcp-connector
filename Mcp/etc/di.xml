@@ -372,6 +372,245 @@
                 <item name="system.log.grep" xsi:type="object">
                     Risecommerce\Mcp\Tool\System\Log\Grep
                 </item>
+
+                <!-- Risecommerce_McpCatalogTools -->
+                <!-- Read tools -->
+                <item name="catalog.product.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\ProductList
+                </item>
+                <item name="catalog.product.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\ProductGet
+                </item>
+                <item name="catalog.category.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Category\CategoryList
+                </item>
+                <item name="catalog.category.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Category\CategoryGet
+                </item>
+
+                <!-- Write tools -->
+                <item name="catalog.product.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\ProductCreate
+                </item>
+                <item name="catalog.product.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\ProductUpdate
+                </item>
+                <item name="catalog.product.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\ProductDelete
+                </item>
+                <item name="catalog.category.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Category\CategoryCreate
+                </item>
+                <item name="catalog.category.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Category\CategoryUpdate
+                </item>
+                <item name="catalog.category.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Category\CategoryDelete
+                </item>
+                <item name="catalog.product.stock.set" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\Stock\StockSet
+                </item>
+                <item name="catalog.product.media.add" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\Media\MediaAdd
+                </item>
+                <item name="catalog.product.media.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\Media\MediaUpdate
+                </item>
+                <item name="catalog.product.media.remove" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Catalog\Product\Media\MediaRemove
+                </item>
+
+                <!-- Risecommerce_McpCmsTools -->
+                <!-- Read tools -->
+                <item name="cms.page.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Page\PageList
+                </item>
+                <item name="cms.page.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Page\PageGet
+                </item>
+                <item name="cms.block.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Block\BlockList
+                </item>
+                <item name="cms.block.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Block\BlockGet
+                </item>
+
+                <!-- Write tools -->
+                <item name="cms.page.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Page\PageCreate
+                </item>
+                <item name="cms.page.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Page\PageUpdate
+                </item>
+                <item name="cms.page.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Page\PageDelete
+                </item>
+                <item name="cms.block.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Block\BlockCreate
+                </item>
+                <item name="cms.block.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Block\BlockUpdate
+                </item>
+                <item name="cms.block.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Cms\Block\BlockDelete
+                </item>
+
+                <!-- Risecommerce_McpCustomerTools -->
+                <item name="customer.customer.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Customer\CustomerList
+                </item>
+                <item name="customer.customer.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Customer\CustomerGet
+                </item>
+                <item name="customer.customer.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Customer\CustomerCreate
+                </item>
+                <item name="customer.customer.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Customer\CustomerUpdate
+                </item>
+                <item name="customer.customer.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Customer\CustomerDelete
+                </item>
+
+                <item name="customer.address.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Address\AddressList
+                </item>
+                <item name="customer.address.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Address\AddressGet
+                </item>
+                <item name="customer.address.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Address\AddressCreate
+                </item>
+                <item name="customer.address.update" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Address\AddressUpdate
+                </item>
+                <item name="customer.address.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Address\AddressDelete
+                </item>
+
+                <item name="customer.group.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Group\GroupList
+                </item>
+                <item name="customer.group.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Group\GroupGet
+                </item>
+
+                <item name="customer.account.confirmation_status" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Account\ConfirmationStatus
+                </item>
+                <item name="customer.account.reset_password" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Account\ResetPassword
+                </item>
+                <item name="customer.account.resend_confirmation" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Customer\Account\ResendConfirmation
+                </item>
+
+                <!-- Risecommerce_McpOrderTools -->
+                <item name="sales.order.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\OrderList
+                </item>
+                <item name="sales.order.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\OrderGet
+                </item>
+                <item name="sales.order.item.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\OrderItemList
+                </item>
+                <item name="sales.order.invoices" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\InvoiceList
+                </item>
+                <item name="sales.order.invoice.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\InvoiceGet
+                </item>
+                <item name="sales.order.shipments" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\ShipmentList
+                </item>
+                <item name="sales.order.shipment.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\ShipmentGet
+                </item>
+                <item name="sales.order.payment" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\PaymentGet
+                </item>
+                <item name="sales.order.comments" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\CommentList
+                </item>
+                <item name="sales.order.credit_memos" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\CreditMemoList
+                </item>
+                <item name="sales.order.credit_memo.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\CreditMemoGet
+                </item>
+
+                <!-- Write tools -->
+                <item name="sales.order.invoice.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\InvoiceCreate
+                </item>
+                <item name="sales.order.shipment.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\ShipmentCreate
+                </item>
+                <item name="sales.order.shipment.track.add" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\ShipmentTrackAdd
+                </item>
+                <item name="sales.order.credit_memo.create" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\CreditMemoCreate
+                </item>
+                <item name="sales.order.cancel" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\Cancel
+                </item>
+                <item name="sales.order.hold" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\Hold
+                </item>
+                <item name="sales.order.unhold" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\Unhold
+                </item>
+                <item name="sales.order.comment.add" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Sales\Order\CommentAdd
+                </item>
+
+                <!-- Risecommerce_McpMarketingTools -->
+                <!-- Catalog rule tools -->
+                <item name="marketing.catalog_rule.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleList
+                </item>
+                <item name="marketing.catalog_rule.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleGet
+                </item>
+                <item name="marketing.catalog_rule.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleDelete
+                </item>
+                <item name="marketing.catalog_rule.set_active" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleSetActive
+                </item>
+                <item name="marketing.catalog_rule.apply_all" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleApplyAll
+                </item>
+
+                <!-- Cart rule tools -->
+                <item name="marketing.cart_rule.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\CartRuleList
+                </item>
+                <item name="marketing.cart_rule.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\CartRuleGet
+                </item>
+                <item name="marketing.cart_rule.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\CartRuleDelete
+                </item>
+                <item name="marketing.cart_rule.set_active" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\CartRuleSetActive
+                </item>
+
+                <!-- Coupon tools -->
+                <item name="marketing.cart_rule.coupon.list" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\Coupon\CouponList
+                </item>
+                <item name="marketing.cart_rule.coupon.get" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\Coupon\CouponGet
+                </item>
+                <item name="marketing.cart_rule.coupon.generate" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\Coupon\CouponGenerate
+                </item>
+                <item name="marketing.cart_rule.coupon.delete" xsi:type="object">
+                    Risecommerce\Mcp\Tool\Marketing\CartRule\Coupon\CouponDelete
+                </item>
             </argument>
         </arguments>
     </type>
@@ -535,6 +774,717 @@
     <type name="Risecommerce\Mcp\Model\JsonRpc\Handler\ToolsCallHandler">
         <arguments>
             <argument name="toolAvailability" xsi:type="object">Risecommerce\Mcp\Model\Tool\ToolAvailability</argument>
+        </arguments>
+    </type>
+
+    <!-- ===== merged from Risecommerce_McpCatalogTools ===== -->
+    <!-- Register every tool with the base module's ToolRegistry. -->
+
+    <!-- Replaced by Risecommerce_McpInventoryTools with an MSI-backed check. -->
+    <preference for="Risecommerce\Mcp\Api\SingleSourceModeCheckerInterface"
+                type="Risecommerce\Mcp\Model\Stock\AssumeSingleSourceMode"/>
+
+    <!-- Product field resolvers (full set for `catalog.product.get`). -->
+    <type name="Risecommerce\Mcp\Tool\Catalog\Product\ProductGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\StateResolver
+                </item>
+                <item name="pricing" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\PricingResolver
+                </item>
+                <item name="tier_prices" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\TierPriceResolver
+                </item>
+                <item name="stock" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\StockResolver
+                </item>
+                <item name="categories" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\CategoriesResolver
+                </item>
+                <item name="websites" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\WebsitesResolver
+                </item>
+                <item name="media" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\MediaResolver
+                </item>
+                <item name="links" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\LinksResolver
+                </item>
+                <item name="type_options" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\TypeOptionsResolver
+                </item>
+                <!-- `variants` is deliberately absent from the list-tool set
+                     below — one child-collection load per row is an N+1.
+                     Get-tool callers that don't need it can pass
+                     `exclude: ["variants"]`. -->
+                <item name="variants" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\VariantsResolver
+                </item>
+                <item name="custom_attributes" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\CustomAttributesResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Product field resolvers (leaner default for `catalog.product.list`). -->
+    <type name="Risecommerce\Mcp\Tool\Catalog\Product\ProductList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\StateResolver
+                </item>
+                <item name="pricing" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\PricingResolver
+                </item>
+                <item name="stock" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\StockResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Product\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Product filter translators — extra `catalog.product.list` filter keys
+         that the built-in dispatch does not handle inline. -->
+    <type name="Risecommerce\Mcp\Model\Search\ProductSearchCriteriaBuilder">
+        <arguments>
+            <argument name="filterTranslators" xsi:type="array">
+                <item name="has_special_price" xsi:type="object">
+                    Risecommerce\Mcp\Model\Search\FilterTranslator\HasSpecialPriceTranslator
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Category field resolvers (full set for `catalog.category.get`).
+         `products` is included here but absent from the list-tool's default
+         set below — `catalog.category.list` carrying a product-id array per
+         row blows response budgets on broad tree dumps. Get-tool callers
+         that don't want the product-id array can pass
+         `exclude: ["products"]`. -->
+    <type name="Risecommerce\Mcp\Tool\Catalog\Category\CategoryGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\StateResolver
+                </item>
+                <item name="tree" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\TreeResolver
+                </item>
+                <item name="content" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\ContentResolver
+                </item>
+                <item name="meta" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\MetaResolver
+                </item>
+                <item name="products" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\ProductsResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Category field resolvers (leaner default for `catalog.category.list`). -->
+    <type name="Risecommerce\Mcp\Tool\Catalog\Category\CategoryList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\StateResolver
+                </item>
+                <item name="tree" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\TreeResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Category\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- ===== merged from Risecommerce_McpCmsTools ===== -->
+    <preference for="Risecommerce\Mcp\Api\EntityFinderInterface"
+                type="Risecommerce\Mcp\Model\CmsEntityFinder"/>
+
+    <!-- Page field resolvers (full set for `cms.page.get`). -->
+    <type name="Risecommerce\Mcp\Tool\Cms\Page\PageGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\StateResolver
+                </item>
+                <item name="content" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\ContentResolver
+                </item>
+                <item name="meta" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\MetaResolver
+                </item>
+                <item name="layout" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\LayoutResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Page field resolvers (leaner default for `cms.page.list`). -->
+    <type name="Risecommerce\Mcp\Tool\Cms\Page\PageList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\StateResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Page\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Block field resolvers (full set for `cms.block.get`). -->
+    <type name="Risecommerce\Mcp\Tool\Cms\Block\BlockGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\StateResolver
+                </item>
+                <item name="content" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\ContentResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Block field resolvers (leaner default for `cms.block.list`). -->
+    <type name="Risecommerce\Mcp\Tool\Cms\Block\BlockList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\StateResolver
+                </item>
+                <item name="stores" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\StoresResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Block\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- ===== merged from Risecommerce_McpCustomerTools ===== -->
+    <!-- Customer field resolvers — full set on Get, lean set on List
+         (addresses are too heavy for paginated responses). -->
+    <type name="Risecommerce\Mcp\Tool\Customer\Customer\CustomerGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\IdentityResolver
+                </item>
+                <item name="name" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\NameResolver
+                </item>
+                <item name="profile" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\ProfileResolver
+                </item>
+                <item name="scope" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\ScopeResolver
+                </item>
+                <item name="addresses" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\AddressesResolver
+                </item>
+                <item name="defaults" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\DefaultsResolver
+                </item>
+                <item name="custom_attributes" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\CustomAttributesResolver
+                </item>
+                <item name="extension_attributes" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\ExtensionAttributesResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Customer\Customer\CustomerList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\IdentityResolver
+                </item>
+                <item name="scope" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\ScopeResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Customer\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Address field resolvers — full set everywhere (addresses are small
+         enough that per-row detail is fine for list responses too). -->
+    <type name="Risecommerce\Mcp\Tool\Customer\Address\AddressGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\IdentityResolver
+                </item>
+                <item name="name" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\NameResolver
+                </item>
+                <item name="location" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\LocationResolver
+                </item>
+                <item name="contact" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\ContactResolver
+                </item>
+                <item name="flags" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\FlagsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Customer\Address\AddressList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\IdentityResolver
+                </item>
+                <item name="name" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\NameResolver
+                </item>
+                <item name="location" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\LocationResolver
+                </item>
+                <item name="flags" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Address\FlagsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Customer\Group\GroupGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Group\IdentityResolver
+                </item>
+                <item name="tax" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Group\TaxResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Customer\Group\GroupList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Group\IdentityResolver
+                </item>
+                <item name="tax" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Group\TaxResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- ===== merged from Risecommerce_McpOrderTools ===== -->
+    <!-- Register every read tool with the base module's ToolRegistry. -->
+
+    <!-- Response-side allowlist for payment `additional_information`. Empty by
+         default so no PSP secrets leak to the MCP client; operators add only the
+         keys they explicitly want exposed (e.g. a method title). This is NOT the
+         audit-log PII redactor — it filters the response payload itself. -->
+    <type name="Risecommerce\Mcp\Model\Payment\AdditionalInformationFilter">
+        <arguments>
+            <argument name="allowlist" xsi:type="array"/>
+        </arguments>
+    </type>
+
+    <!-- Order field resolvers (shared between `sales.order.get` and a
+         narrower subset for `sales.order.list`). -->
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\OrderGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\StateResolver
+                </item>
+                <item name="customer" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\CustomerResolver
+                </item>
+                <item name="addresses" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\AddressResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\ItemsResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\TotalsResolver
+                </item>
+                <item name="payment" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\PaymentResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- `items` is wrapped in OnDemandResolver: list rows include it only
+         when the caller explicitly asks via fields:["items"], so default
+         list payloads stay small and no per-order item loading happens. -->
+    <virtualType name="Risecommerce\Mcp\Model\FieldResolver\Order\OnDemandItemsResolver"
+                 type="Risecommerce\Mcp\Model\FieldResolver\Order\OnDemandResolver">
+        <arguments>
+            <argument name="inner" xsi:type="object">
+                Risecommerce\Mcp\Model\FieldResolver\Order\ItemsResolver
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\OrderList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\StateResolver
+                </item>
+                <item name="customer" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\CustomerResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\OnDemandItemsResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\TotalsResolver
+                </item>
+                <item name="timestamps" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Order\TimestampsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Invoice resolvers. -->
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\InvoiceGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\StateResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\TotalsResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\ItemsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\InvoiceList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\IdentityResolver
+                </item>
+                <item name="state" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\StateResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Invoice\TotalsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Shipment resolvers. -->
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\ShipmentGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Shipment\IdentityResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Shipment\ItemsResolver
+                </item>
+                <item name="tracks" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Shipment\TracksResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\ShipmentList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Shipment\IdentityResolver
+                </item>
+                <item name="tracks" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Shipment\TracksResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Credit memo resolvers. -->
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\CreditMemoGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CreditMemo\IdentityResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CreditMemo\TotalsResolver
+                </item>
+                <item name="items" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CreditMemo\ItemsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\CreditMemoList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CreditMemo\IdentityResolver
+                </item>
+                <item name="totals" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CreditMemo\TotalsResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Order comments. -->
+    <type name="Risecommerce\Mcp\Tool\Sales\Order\CommentList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Comment\IdentityResolver
+                </item>
+                <item name="body" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Comment\BodyResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- ===== merged from Risecommerce_McpMarketingTools ===== -->
+    <!-- Register every tool with the base module's ToolRegistry. -->
+
+    <!-- Catalog rule field resolvers — shared between get and list. -->
+    <type name="Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\IdentityResolver
+                </item>
+                <item name="scope" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ScopeResolver
+                </item>
+                <item name="schedule" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ScheduleResolver
+                </item>
+                <item name="conditions" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ConditionsResolver
+                </item>
+                <item name="action" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ActionResolver
+                </item>
+                <item name="lifecycle" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\LifecycleResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Marketing\CatalogRule\CatalogRuleList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\IdentityResolver
+                </item>
+                <item name="scope" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ScopeResolver
+                </item>
+                <item name="schedule" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ScheduleResolver
+                </item>
+                <item name="action" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\ActionResolver
+                </item>
+                <item name="lifecycle" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CatalogRule\LifecycleResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Cart rule field resolvers — shared between get and list. -->
+    <type name="Risecommerce\Mcp\Tool\Marketing\CartRule\CartRuleGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\IdentityResolver
+                </item>
+                <item name="scope" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ScopeResolver
+                </item>
+                <item name="schedule" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ScheduleResolver
+                </item>
+                <item name="condition" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ConditionsResolver
+                </item>
+                <item name="action_condition" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ActionConditionResolver
+                </item>
+                <item name="action" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ActionResolver
+                </item>
+                <item name="coupon_settings" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\CouponSettingsResolver
+                </item>
+                <item name="usage" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\UsageResolver
+                </item>
+                <item name="store_labels" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\StoreLabelsResolver
+                </item>
+                <item name="lifecycle" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\LifecycleResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Marketing\CartRule\CartRuleList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\IdentityResolver
+                </item>
+                <item name="scope" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ScopeResolver
+                </item>
+                <item name="schedule" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ScheduleResolver
+                </item>
+                <item name="action" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\ActionResolver
+                </item>
+                <item name="coupon_settings" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\CouponSettingsResolver
+                </item>
+                <item name="usage" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\UsageResolver
+                </item>
+                <item name="lifecycle" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\CartRule\LifecycleResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Coupon field resolvers — shared between get and list. -->
+    <type name="Risecommerce\Mcp\Tool\Marketing\CartRule\Coupon\CouponGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\IdentityResolver
+                </item>
+                <item name="rule" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\RuleResolver
+                </item>
+                <item name="usage" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\UsageResolver
+                </item>
+                <item name="lifecycle" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\LifecycleResolver
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Risecommerce\Mcp\Tool\Marketing\CartRule\Coupon\CouponList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\IdentityResolver
+                </item>
+                <item name="rule" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\RuleResolver
+                </item>
+                <item name="usage" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\UsageResolver
+                </item>
+                <item name="lifecycle" xsi:type="object">
+                    Risecommerce\Mcp\Model\FieldResolver\Coupon\LifecycleResolver
+                </item>
+            </argument>
         </arguments>
     </type>
 </config>

@@ -20,12 +20,13 @@ Two things you cannot do from the command line, so plan to ask a human for them:
 ## Stage 1 — Install and enable
 
 ```bash
-composer require risecommerce/magento2-mcp-module
-bin/magento module:enable Risecommerce_Mcp
+composer require risecommerce/magento2-mcp-connector
+bin/magento module:enable Risecommerce_PiiRedactor Risecommerce_Mcp \
+  Risecommerce_McpInventoryTools Risecommerce_McpReportTools Risecommerce_McpTaxTools
 bin/magento setup:upgrade
 ```
 
-For the whole tool suite (catalog, CMS, customer, inventory, marketing, order, report, tax) require `risecommerce/magento2-mcp-suite` instead and run `setup:upgrade`. Be aware that `setup:upgrade` **enables every module it has not seen before** — if some should be off in this environment, disable them in the same deploy, before the store serves traffic.
+The package contains every tool module (catalog, CMS, customer, inventory, marketing, order, report, tax). If the store has no Multi-Source Inventory, run `bin/magento module:disable Risecommerce_McpInventoryTools` before `setup:upgrade`. Be aware that `setup:upgrade` **enables every module it has not seen before** — if some should be off in this environment, disable them in the same deploy, before the store serves traffic.
 
 **Check:**
 

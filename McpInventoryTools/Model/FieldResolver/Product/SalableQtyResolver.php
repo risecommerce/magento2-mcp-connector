@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace Risecommerce\McpInventoryTools\Model\FieldResolver\Product;
 
-use Risecommerce\McpCatalogTools\Api\ProductFieldResolverInterface;
+use Risecommerce\Mcp\Api\ProductFieldResolverInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\InventoryCatalogApi\Api\DefaultStockProviderInterface;
 use Magento\InventoryReservationsApi\Model\GetReservationsQuantityInterface;

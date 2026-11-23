@@ -9,14 +9,19 @@ use Risecommerce\PiiRedactor\Strategy\StrategyInterface;
 
 final class RedactionConfig
 {
+    private readonly StrategyInterface $default;
+
     /**
+     * Default is null, not `new ReplaceStrategy()`: see Analyzer::__construct (Magento DI compile).
+     *
      * @param array<string, StrategyInterface> $strategies Entity type => strategy.
-     * @param StrategyInterface $default Fallback for unconfigured types.
+     * @param StrategyInterface|null $default Fallback for unconfigured types (ReplaceStrategy when null).
      */
     public function __construct(
         private readonly array $strategies = [],
-        private readonly StrategyInterface $default = new ReplaceStrategy(),
+        ?StrategyInterface $default = null,
     ) {
+        $this->default = $default ?? new ReplaceStrategy();
     }
 
     /**

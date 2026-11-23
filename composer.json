@@ -1,0 +1,45 @@
+{
+    "name": "risecommerce/magento2-mcp-connector",
+    "description": "Risecommerce MCP Connector for Magento 2: MCP server with catalog, CMS, customer, order, marketing, inventory, report and tax tools",
+    "type": "magento2-module",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "ext-mbstring": "*",
+        "magento/framework": "^103.0",
+        "opis/json-schema": "^2.4"
+    },
+    "replace": {
+        "risecommerce/magento2-mcp-module": "self.version",
+        "risecommerce/magento2-mcp-catalog-tools": "self.version",
+        "risecommerce/magento2-mcp-cms-tools": "self.version",
+        "risecommerce/magento2-mcp-customer-tools": "self.version",
+        "risecommerce/magento2-mcp-order-tools": "self.version",
+        "risecommerce/magento2-mcp-marketing-tools": "self.version",
+        "risecommerce/magento2-mcp-inventory-tools": "self.version",
+        "risecommerce/magento2-mcp-report-tools": "self.version",
+        "risecommerce/magento2-mcp-tax-tools": "self.version",
+        "risecommerce/magento2-pii-redactor": "self.version"
+    },
+    "suggest": {
+        "risecommerce/magento2-mcp-google-analytics-tools": "Sub-module for Google Analytics 4 MCP tools",
+        "risecommerce/magento2-mcp-hyva-commerce-tools": "Sub-module for Hyvä Commerce MCP tools",
+        "risecommerce/magento2-mcp-db-tools": "Sub-module exposing a guarded read-only SQL tool"
+    },
+    "autoload": {
+        "files": [
+            "Mcp/registration.php",
+            "McpInventoryTools/registration.php",
+            "McpReportTools/registration.php",
+            "McpTaxTools/registration.php",
+            "PiiRedactor/registration.php"
+        ],
+        "psr-4": {
+            "Risecommerce\\Mcp\\": "Mcp/",
+            "Risecommerce\\McpInventoryTools\\": "McpInventoryTools/",
+            "Risecommerce\\McpReportTools\\": "McpReportTools/",
+            "Risecommerce\\McpTaxTools\\": "McpTaxTools/",
+            "Risecommerce\\PiiRedactor\\": "PiiRedactor/"
+        }
+    }
+}

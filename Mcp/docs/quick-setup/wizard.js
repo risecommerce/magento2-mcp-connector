@@ -5,11 +5,9 @@
   // 'claude-desktop' is temporarily disabled pending Linux verification.
   var AGENTS = ['claude-web', 'claude-code', 'cursor', 'chatgpt', 'other'];
 
-  // Tool modules bundled by the suite meta-package. Tick all of them and the
-  // generated composer line collapses to the single suite package.
-  var SUITE_MODULES = ['order', 'catalog', 'customer', 'inventory', 'cms', 'marketing', 'tax', 'report'];
-  var SUITE_PACKAGE = 'risecommerce/magento2-mcp-suite';
-  var CORE_PACKAGE = 'risecommerce/magento2-mcp-module';
+  // One package ships the server plus every checkbox with an empty data-package;
+  // only the optional add-ons (GA4, Hyvä Commerce, DB) are separate packages.
+  var CORE_PACKAGE = 'risecommerce/magento2-mcp-connector';
 
   function parseHash() {
     var raw = (window.location.hash || '').replace(/^#/, '');
@@ -151,34 +149,22 @@
     return document.querySelectorAll('#featurelist input[type="checkbox"]:checked');
   }
 
-  function suiteCovered(checked) {
-    for (var i = 0; i < SUITE_MODULES.length; i++) {
-      var found = false;
-      for (var j = 0; j < checked.length; j++) {
-        if (checked[j].getAttribute('data-module') === SUITE_MODULES[i]) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) return false;
-    }
-    return true;
-  }
-
   function buildInstallCommand() {
     var output = document.getElementById('cmd-install');
     if (!output) return;
-    var checked = checkedBoxes();
-    var useSuite = suiteCovered(checked);
-    var packages = [useSuite ? SUITE_PACKAGE : CORE_PACKAGE];
-    var modules = ['Risecommerce_Mcp'];
-    for (var i = 0; i < checked.length; i++) {
-      var slug = checked[i].getAttribute('data-module');
-      // In suite mode the eight bundled modules arrive via the meta-package.
-      if (!useSuite || SUITE_MODULES.indexOf(slug) === -1) {
-        packages.push(checked[i].getAttribute('data-package'));
+    var boxes = document.querySelectorAll('#featurelist input[type="checkbox"]');
+    var packages = [CORE_PACKAGE];
+    var modules = ['Risecommerce_PiiRedactor', 'Risecommerce_Mcp'];
+    var disabled = [];
+    for (var i = 0; i < boxes.length; i++) {
+      var pkg = boxes[i].getAttribute('data-package');
+      if (boxes[i].checked) {
+        if (pkg) packages.push(pkg);
+        modules.push(boxes[i].getAttribute('data-name'));
+      } else if (!pkg) {
+        // Installed by the connector package anyway; setup:upgrade would enable it.
+        disabled.push(boxes[i].getAttribute('data-name'));
       }
-      modules.push(checked[i].getAttribute('data-name'));
     }
 
     var composerLine;
@@ -189,13 +175,8 @@
     }
 
     var enableLine = 'bin/magento module:enable ' + modules.join(' \\\n  ');
-    output.textContent = composerLine + '\n\n' + enableLine + '\n\nbin/magento setup:upgrade';
-  }
-
-  function syncSuiteNote() {
-    var note = document.querySelector('[data-suite-note]');
-    if (!note) return;
-    note.hidden = !suiteCovered(checkedBoxes());
+    var disableLine = disabled.length ? '\n\nbin/magento module:disable ' + disabled.join(' \\\n  ') : '';
+    output.textContent = composerLine + '\n\n' + enableLine + disableLine + '\n\nbin/magento setup:upgrade';
   }
 
   function syncDbWarning() {
@@ -209,7 +190,6 @@
     if (evt.target.matches && evt.target.matches('#featurelist input[type="checkbox"]')) {
       buildInstallCommand();
       syncDbWarning();
-      syncSuiteNote();
     }
   }
 
@@ -220,6 +200,5 @@
     render();
     buildInstallCommand();
     syncDbWarning();
-    syncSuiteNote();
   });
 })();

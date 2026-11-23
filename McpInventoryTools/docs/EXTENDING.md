@@ -2,7 +2,7 @@
 
 ## Add a field to the product `salable_qty` slice
 
-This module contributes a `salable_qty` resolver to `Risecommerce_McpCatalogTools`'
+This module contributes a `salable_qty` resolver to `Risecommerce_Mcp` (catalog tools)'
 product read tools. To add your own slice — a per-source breakdown, an ERP
 reference, a lead time — implement the catalog module's
 `ProductFieldResolverInterface` and register it the same way.
@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Vendor\Module\Mcp\Resolver;
 
-use Risecommerce\McpCatalogTools\Api\ProductFieldResolverInterface;
+use Risecommerce\Mcp\Api\ProductFieldResolverInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 
 final class LeadTimeResolver implements ProductFieldResolverInterface
@@ -29,7 +29,7 @@ final class LeadTimeResolver implements ProductFieldResolverInterface
 ```
 
 ```xml
-<type name="Risecommerce\McpCatalogTools\Tool\Catalog\Product\ProductGet">
+<type name="Risecommerce\Mcp\Tool\Catalog\Product\ProductGet">
     <arguments>
         <argument name="fieldResolvers" xsi:type="array">
             <item name="lead_time" xsi:type="object">
@@ -48,12 +48,12 @@ to `null`, the way `SalableQtyResolver` does for composite products.
 
 `catalog.product.stock.set` warns when a legacy stock write would silently land
 on the default source. It asks
-`Risecommerce\McpCatalogTools\Api\SingleSourceModeCheckerInterface`, which this
+`Risecommerce\Mcp\Api\SingleSourceModeCheckerInterface`, which this
 module preferences to an MSI-backed implementation. Override the preference if
 your store decides multi-source differently:
 
 ```xml
-<preference for="Risecommerce\McpCatalogTools\Api\SingleSourceModeCheckerInterface"
+<preference for="Risecommerce\Mcp\Api\SingleSourceModeCheckerInterface"
             type="Vendor\Module\Model\MySingleSourceModeChecker"/>
 ```
 
