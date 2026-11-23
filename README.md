@@ -449,7 +449,7 @@ bin/magento module:enable Risecommerce_Mcp
 bin/magento setup:upgrade
 ```
 
-Everything at once (catalog, CMS, customer, inventory, marketing, order, report and tax) through the [suite meta-package](https://github.com/risecommerce/magento2-mcp-suite):
+Everything at once (catalog, CMS, customer, inventory, marketing, order, report and tax) through the [suite meta-package](https://github.com/risecommerce/magento2-mcp-connector):
 
 ```bash
 composer require risecommerce/magento2-mcp-suite
