@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="https://risecommerce.com/store/media/logo/stores/1/riselogo--red.svg" alt="Sample MCP session: an operator asks why a customer's order hasn't arrived; the AI calls three MCP tools and reports the order status, shipment progress, and customer history." width="100%">
-</p>
 
 <h1 align="center">Risecommerce Magento 2 MCP</h1>
 <h3 align="center">Connect your Magento 2 store to Claude, ChatGPT, Manus and any AI agent</h3>
