@@ -1,30 +1,75 @@
 {
     "name": "risecommerce/magento2-mcp-connector",
-    "description": "Risecommerce MCP Connector for Magento 2: MCP server with catalog, CMS, customer, order, marketing, inventory, report and tax tools",
+    "description": "Connect Magento 2 to Claude, ChatGPT and other AI agents over the Model Context Protocol (MCP): OAuth 2.1 and bearer auth, admin ACL, PII-redacted audit log, and tools for catalog, CMS, customers, orders, marketing, inventory, reports and tax.",
     "type": "magento2-module",
+    "keywords": [
+        "magento",
+        "magento2",
+        "magento2-module",
+        "adobe-commerce",
+        "mage-os",
+        "mcp",
+        "model-context-protocol",
+        "ai",
+        "llm",
+        "claude",
+        "chatgpt"
+    ],
+    "homepage": "https://risecommerce.com/magento/mcp-connector",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Risecommerce",
+            "email": "info@risecommerce.com",
+            "homepage": "https://risecommerce.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/risecommerce/magento2-mcp-connector/issues",
+        "source": "https://github.com/risecommerce/magento2-mcp-connector",
+        "docs": "https://github.com/risecommerce/magento2-mcp-connector#readme"
+    },
     "require": {
-        "php": ">=8.1",
+        "php": "~8.1.0||~8.2.0||~8.3.0||~8.4.0||~8.5.0",
         "ext-mbstring": "*",
         "magento/framework": "^103.0",
-        "opis/json-schema": "^2.4"
-    },
-    "replace": {
-        "risecommerce/magento2-mcp-module": "self.version",
-        "risecommerce/magento2-mcp-catalog-tools": "self.version",
-        "risecommerce/magento2-mcp-cms-tools": "self.version",
-        "risecommerce/magento2-mcp-customer-tools": "self.version",
-        "risecommerce/magento2-mcp-order-tools": "self.version",
-        "risecommerce/magento2-mcp-marketing-tools": "self.version",
-        "risecommerce/magento2-mcp-inventory-tools": "self.version",
-        "risecommerce/magento2-mcp-report-tools": "self.version",
-        "risecommerce/magento2-mcp-tax-tools": "self.version",
-        "risecommerce/magento2-pii-redactor": "self.version"
+        "opis/json-schema": "^2.4",
+        "magento/module-admin-notification": "*",
+        "magento/module-authorization": "*",
+        "magento/module-backend": "*",
+        "magento/module-bundle": "*",
+        "magento/module-catalog": "*",
+        "magento/module-catalog-inventory": "*",
+        "magento/module-catalog-rule": "*",
+        "magento/module-cms": "*",
+        "magento/module-config": "*",
+        "magento/module-configurable-product": "*",
+        "magento/module-cron": "*",
+        "magento/module-csp": "*",
+        "magento/module-currency-symbol": "*",
+        "magento/module-customer": "*",
+        "magento/module-directory": "*",
+        "magento/module-downloadable": "*",
+        "magento/module-eav": "*",
+        "magento/module-indexer": "*",
+        "magento/module-newsletter": "*",
+        "magento/module-quote": "*",
+        "magento/module-reports": "*",
+        "magento/module-review": "*",
+        "magento/module-sales": "*",
+        "magento/module-sales-rule": "*",
+        "magento/module-search": "*",
+        "magento/module-store": "*",
+        "magento/module-tax": "*",
+        "magento/module-ui": "*",
+        "magento/module-user": "*"
     },
     "suggest": {
-        "risecommerce/magento2-mcp-google-analytics-tools": "Sub-module for Google Analytics 4 MCP tools",
-        "risecommerce/magento2-mcp-hyva-commerce-tools": "Sub-module for Hyvä Commerce MCP tools",
-        "risecommerce/magento2-mcp-db-tools": "Sub-module exposing a guarded read-only SQL tool"
+        "magento/module-inventory-api": "Required by Risecommerce_McpInventoryTools (Multi-Source Inventory)",
+        "magento/module-inventory-catalog-api": "Required by Risecommerce_McpInventoryTools (Multi-Source Inventory)",
+        "magento/module-inventory-configuration-api": "Required by Risecommerce_McpInventoryTools (Multi-Source Inventory)",
+        "magento/module-inventory-reservations-api": "Required by Risecommerce_McpInventoryTools (Multi-Source Inventory)",
+        "magento/module-inventory-sales-api": "Required by Risecommerce_McpInventoryTools (Multi-Source Inventory)"
     },
     "autoload": {
         "files": [
