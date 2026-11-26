@@ -1,6 +1,4 @@
 .admin__page-nav.risecommerce-config-tab .title::before {
-    content: "";
-    background: url("../images/tab/risecommerce.svg") no-repeat scroll 0 0 transparent;
     width: 20px;
     height: 20px;
     display: inline-block;
